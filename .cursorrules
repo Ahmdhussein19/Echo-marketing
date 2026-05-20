@@ -1,0 +1,1020 @@
+---
+description: 
+alwaysApply: true
+---
+
+# ============================================================
+# .cursorrules — Next.js + TypeScript Production Standard
+# Architecture · Performance · SEO · DX · Security
+# ============================================================
+# This file is the single source of truth for all AI agents,
+# co-pilots, and contributors on this project. Every rule
+# here exists because its absence caused a real production
+# failure somewhere. Non-negotiable. Zero ambiguity.
+# ============================================================
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 1. PROJECT IDENTITY
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+framework: Next.js 14+ (App Router)
+language: TypeScript 5+ (strict mode, no exceptions)
+runtime: React 18+ (Server Components by default)
+styling: Tailwind CSS v3+ (utility-first, no inline styles)
+package_manager: pnpm (lockfile committed, no npm/yarn mixing)
+node_version: ">=20.0.0"
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 2. DIRECTORY ARCHITECTURE (App Router)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Enforce this structure. Do not create files outside of it
+# without explicit architectural justification in a PR.
+#
+# src/
+# ├── app/                        ← Next.js App Router root
+# │   ├── (marketing)/            ← Route group: public pages
+# │   │   ├── page.tsx            ← Landing page (SSG)
+# │   │   └── layout.tsx
+# │   ├── (dashboard)/            ← Route group: auth-protected
+# │   │   ├── layout.tsx          ← Shared dashboard shell
+# │   │   └── [feature]/
+# │   │       └── page.tsx
+# │   ├── api/                    ← Route Handlers only
+# │   │   └── [resource]/
+# │   │       └── route.ts
+# │   ├── layout.tsx              ← Root layout (fonts, providers)
+# │   ├── not-found.tsx
+# │   └── error.tsx
+# │
+# ├── features/                   ← Feature-first domain modules
+# │   └── [feature-name]/
+# │       ├── components/         ← Feature-scoped UI
+# │       ├── hooks/              ← Feature-scoped hooks
+# │       ├── actions/            ← Server Actions (server-only)
+# │       ├── queries/            ← Data fetching functions
+# │       ├── schemas/            ← Zod validation schemas
+# │       ├── types.ts            ← Feature-scoped types
+# │       └── index.ts            ← Barrel export
+# │
+# ├── components/
+# │   ├── ui/                     ← Primitives (shadcn, radix)
+# │   └── shared/                 ← Cross-feature components
+# │
+# ├── lib/
+# │   ├── db/                     ← DB client + query helpers
+# │   ├── auth/                   ← Auth utilities
+# │   ├── validations/            ← Shared Zod schemas
+# │   └── utils.ts                ← Pure utility functions only
+# │
+# ├── hooks/                      ← Global client hooks
+# ├── stores/                     ← Global state (Zustand/Jotai)
+# ├── types/                      ← Global TypeScript types
+# ├── config/                     ← App config, constants
+# └── styles/                     ← Global CSS, Tailwind base
+#
+# public/
+# ├── images/                     ← Static images (WebP preferred)
+# ├── fonts/                      ← Self-hosted fonts only
+# └── icons/                      ← SVG sprite or individual SVGs
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 3. TYPESCRIPT RULES — STRICT, NO ESCAPE HATCHES
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+typescript_rules:
+  # tsconfig.json must include these. Do not remove.
+  strict: true
+  noUncheckedIndexedAccess: true
+  noImplicitReturns: true
+  exactOptionalPropertyTypes: true
+
+  # FORBIDDEN — these will be rejected in code review
+  forbidden:
+    - "any"                   # Use unknown, generics, or proper types
+    - "as any"                # Never. Diagnose and type correctly
+    - "@ts-ignore"            # Use @ts-expect-error with a comment
+    - "// @ts-nocheck"        # Banned entirely
+    - "!"                     # Non-null assertion — type it properly
+    - "Function"              # Use explicit function signatures
+    - "object"                # Use Record<K, V> or interface
+    - "{}  as Type"           # Use proper type narrowing
+
+  # REQUIRED patterns
+  required:
+    - Use Zod for ALL runtime validation (API inputs, env vars, form data)
+    - Use discriminated unions for state machines (not boolean flags)
+    - Prefer type over interface for unions/primitives; interface for objects
+    - Export types from feature index.ts; never import from deep paths
+    - Use const assertions for config objects: "as const"
+    - Use satisfies operator to validate without widening
+
+  # Naming conventions
+  naming:
+    components: PascalCase          # UserProfileCard
+    hooks: camelCase with use-     # useUserProfile
+    server_actions: camelCase      # createUserAction
+    types: PascalCase              # UserProfile
+    enums: PascalCase              # UserRole
+    constants: SCREAMING_SNAKE     # MAX_RETRY_COUNT
+    files: kebab-case              # user-profile-card.tsx
+    route_files: Next.js spec      # page.tsx, layout.tsx, route.ts
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 4. RENDERING STRATEGY — WHEN TO USE WHAT
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# The App Router default is Server Components (RSC).
+# The decision tree below is mandatory. Document deviations.
+
+rendering_decision_tree:
+
+  # Static Site Generation (SSG) — generateStaticParams + no fetch opts
+  SSG:
+    when:
+      - Marketing pages (landing, about, pricing, blog)
+      - Documentation
+      - Content that changes < once per hour
+    how: "export async function generateStaticParams()"
+    revalidation: false  # Redeploy to update
+
+  # Incremental Static Regeneration (ISR)
+  ISR:
+    when:
+      - Blog posts, product pages, category pages
+      - Content that changes but doesn't need real-time
+    how: "fetch(url, { next: { revalidate: N } }) // seconds"
+    revalidation: 60 to 3600  # Tune per data freshness needs
+
+  # Server-Side Rendering (SSR / dynamic)
+  SSR:
+    when:
+      - Pages requiring auth session per request
+      - Personalized dashboards
+      - Data that must never be stale
+    how: "export const dynamic = 'force-dynamic'"
+    caution: "Increases TTFB. Use only when ISR is insufficient."
+
+  # React Server Components (RSC) — default, no annotation needed
+  RSC:
+    when: "All components that do NOT need browser APIs or interactivity"
+    rules:
+      - No useState, useEffect, useRef, useContext
+      - No event handlers (onClick, onChange)
+      - Can be async — await data directly
+      - Never import client-only libraries
+
+  # Client Components — 'use client' directive required at top
+  Client_Components:
+    when:
+      - User interaction (forms, modals, dropdowns, toggles)
+      - Browser APIs (window, localStorage, IntersectionObserver)
+      - Real-time subscriptions (WebSocket, SSE)
+      - Animations requiring JS (Framer Motion, etc.)
+    rules:
+      - Push 'use client' boundary as DEEP as possible
+      - Wrap only the interactive leaf — not the whole page
+      - Never fetch data inside Client Components — pass as props from RSC
+      - Pass serializable props only (no functions, no class instances)
+
+  # ANTI-PATTERNS — these will be flagged
+  anti_patterns:
+    - "Adding 'use client' to page.tsx — never do this"
+    - "Fetching in useEffect — use RSC or React Query"
+    - "Passing non-serializable props across RSC→Client boundary"
+    - "Importing server-only code into client components"
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 5. DATA FETCHING — PATTERNS AND PROHIBITIONS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+data_fetching:
+
+  server_side:
+    - Fetch directly in RSC async components — no useEffect, no SWR
+    - Co-locate fetch functions in features/[feature]/queries/
+    - Use Next.js extended fetch: cache, revalidate, tags
+    - Use React's cache() to deduplicate cross-component fetches
+    - Never fetch inside Server Actions — Actions mutate, queries fetch
+
+  server_actions:
+    location: "features/[feature]/actions/[action-name].ts"
+    rules:
+      - Top of file: 'use server' directive
+      - Validate ALL inputs with Zod before touching DB
+      - Return typed result objects, never throw to client
+      - Use revalidatePath / revalidateTag after mutations
+      - Never return non-serializable values (Date → ISO string)
+      - Wrap in try/catch, return { success, data, error } shape
+    pattern: |
+      // features/posts/actions/create-post.ts
+      'use server'
+      import { z } from 'zod'
+      import { createPostSchema } from '../schemas'
+
+      type ActionResult<T> =
+        | { success: true; data: T }
+        | { success: false; error: string }
+
+      export async function createPost(
+        input: z.infer<typeof createPostSchema>
+      ): Promise<ActionResult<Post>> {
+        const parsed = createPostSchema.safeParse(input)
+        if (!parsed.success) {
+          return { success: false, error: parsed.error.message }
+        }
+        try {
+          const post = await db.posts.create({ data: parsed.data })
+          revalidatePath('/posts')
+          return { success: true, data: post }
+        } catch {
+          return { success: false, error: 'Failed to create post' }
+        }
+      }
+
+  client_side:
+    library: "TanStack Query (React Query) for client-side async state"
+    rules:
+      - Only for client-interactive data (search, infinite scroll, polling)
+      - Define query keys in a central queryKeys factory
+      - Set staleTime appropriately — default is 0, which is wrong
+      - Co-locate query hooks in features/[feature]/hooks/
+    anti_patterns:
+      - "useEffect + fetch — never"
+      - "useState for server data — never"
+      - "Fetching in Client Components what RSC could fetch — never"
+
+  environment_variables:
+    validation: "Use Zod to parse process.env at startup — see config/env.ts"
+    public_vars: "NEXT_PUBLIC_ prefix — exposed to browser, no secrets"
+    server_vars: "No prefix — server only, never log or expose"
+    pattern: |
+      // config/env.ts
+      import { z } from 'zod'
+      const envSchema = z.object({
+        DATABASE_URL: z.string().url(),
+        NEXT_PUBLIC_APP_URL: z.string().url(),
+      })
+      export const env = envSchema.parse(process.env)
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 6. PERFORMANCE — CORE WEB VITALS TARGETS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# These are not aspirational. They are pass/fail gates.
+# Lighthouse CI runs on every PR. Scores below these block merge.
+
+performance_targets:
+  LCP: "<2.5s"     # Largest Contentful Paint
+  FID: "<100ms"    # First Input Delay (or INP < 200ms)
+  CLS: "<0.1"      # Cumulative Layout Shift
+  TTFB: "<600ms"   # Time to First Byte
+  FCP: "<1.8s"     # First Contentful Paint
+  lighthouse_score: ">=90 performance, >=90 accessibility, 100 SEO"
+
+images:
+  component: "next/image — mandatory for ALL <img> tags"
+  rules:
+    - Always provide width and height to prevent CLS
+    - Use priority prop on above-the-fold images (LCP candidate)
+    - Use sizes prop for responsive images
+    - Format: WebP/AVIF (Next.js handles conversion automatically)
+    - Never use unoptimized unless serving from external CDN
+    - Lazy load below-the-fold (default behavior, do not override)
+  pattern: |
+    <Image
+      src="/hero.webp"
+      alt="Descriptive alt text — never empty for meaningful images"
+      width={1200}
+      height={630}
+      priority          // LCP image only
+      sizes="(max-width: 768px) 100vw, 50vw"
+    />
+
+fonts:
+  strategy: "Self-host via next/font — never load from Google Fonts CDN"
+  rules:
+    - Use next/font/google or next/font/local
+    - Set display: 'swap' to prevent invisible text during load
+    - Preload critical fonts (next/font does this automatically)
+    - Use CSS variables for font families: var(--font-sans)
+    - Never @import fonts in CSS files
+  pattern: |
+    // app/layout.tsx
+    import { Inter } from 'next/font/google'
+    const inter = Inter({
+      subsets: ['latin'],
+      display: 'swap',
+      variable: '--font-sans',
+    })
+
+scripts:
+  third_party:
+    - Use next/script with strategy="lazyOnload" for analytics
+    - Use strategy="afterInteractive" for chat widgets, support tools
+    - Use strategy="beforeInteractive" ONLY for critical polyfills
+    - Never block render with synchronous third-party scripts
+  pattern: |
+    <Script
+      src="https://analytics.example.com/script.js"
+      strategy="lazyOnload"
+    />
+
+bundle_optimization:
+  - Use dynamic imports for heavy components not needed on first load
+  - Lazy load modals, drawers, rich text editors, charts
+  - Use next/dynamic with ssr: false for browser-only libraries
+  - Analyze bundle with @next/bundle-analyzer before each release
+  - Tree-shake — import only what you use (no barrel imports from large libs)
+  pattern: |
+    const HeavyChart = dynamic(() => import('@/components/charts/HeavyChart'), {
+      loading: () => <ChartSkeleton />,
+      ssr: false,
+    })
+
+caching:
+  - Set Cache-Control headers on API routes explicitly
+  - Use Next.js fetch cache tags for granular invalidation
+  - Use unstable_cache for expensive DB queries in RSC
+  - Redis for session storage and frequently-read data
+  - CDN (Vercel Edge / Cloudflare) for static assets — never bypass
+
+code_splitting:
+  - Route-level splitting is automatic with App Router
+  - Component-level: use dynamic() for anything > 50KB
+  - Shared chunks: configure in next.config.ts splitChunks
+  - Avoid importing from index barrels that include unused exports
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 7. SEO — TECHNICAL SEO IMPLEMENTATION
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+seo:
+
+  metadata_api:
+    approach: "Use Next.js Metadata API — no react-helmet, no manual <Head>"
+    rules:
+      - Export metadata from every page.tsx (static) or generateMetadata() (dynamic)
+      - Never duplicate title/description in layout and page — page wins
+      - Root layout.tsx sets site-wide defaults as MetadataBase
+      - Every page overrides title and description specifically
+    pattern: |
+      // app/(marketing)/about/page.tsx
+      import type { Metadata } from 'next'
+
+      export const metadata: Metadata = {
+        title: 'About Us | CompanyName',
+        description: 'Concise, keyword-rich description 150-160 chars.',
+        openGraph: {
+          title: 'About Us',
+          description: 'OG description — can differ from meta description',
+          images: [{ url: '/og/about.png', width: 1200, height: 630 }],
+        },
+        twitter: {
+          card: 'summary_large_image',
+          title: 'About Us | CompanyName',
+        },
+        alternates: {
+          canonical: 'https://yourdomain.com/about',
+        },
+      }
+
+  structured_data:
+    format: "JSON-LD — inject via <script type='application/ld+json'>"
+    required_schemas:
+      - WebSite (root layout)
+      - Organization (root layout)
+      - WebPage (every page)
+      - BreadcrumbList (nested pages)
+      - Article (blog posts)
+      - Product (e-commerce)
+      - FAQPage (FAQ sections)
+    rules:
+      - Validate with Google's Rich Results Test before deploy
+      - Use schema.org types — no invented properties
+      - Never duplicate schemas injected by CMS or plugins
+    pattern: |
+      // components/shared/JsonLd.tsx
+      export function JsonLd({ schema }: { schema: Record<string, unknown> }) {
+        return (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+          />
+        )
+      }
+
+  sitemap:
+    file: "app/sitemap.ts — dynamic, auto-generated"
+    rules:
+      - Include all indexable pages — exclude /dashboard/, /api/
+      - Set lastModified from actual content updated_at timestamps
+      - Set changeFrequency and priority accurately (not all 1.0)
+      - Submit to Google Search Console after every major release
+    pattern: |
+      // app/sitemap.ts
+      import type { MetadataRoute } from 'next'
+      export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+        const posts = await getPosts()
+        return [
+          { url: 'https://example.com', lastModified: new Date(), priority: 1.0 },
+          ...posts.map(p => ({
+            url: `https://example.com/blog/${p.slug}`,
+            lastModified: p.updatedAt,
+            changeFrequency: 'weekly' as const,
+            priority: 0.8,
+          })),
+        ]
+      }
+
+  robots:
+    file: "app/robots.ts"
+    rules:
+      - Disallow /api/, /dashboard/, /admin/, /_next/
+      - Allow / for all crawlers unless content is gated
+      - Reference sitemap URL explicitly
+    pattern: |
+      // app/robots.ts
+      import type { MetadataRoute } from 'next'
+      export default function robots(): MetadataRoute.Robots {
+        return {
+          rules: { userAgent: '*', allow: '/', disallow: ['/api/', '/dashboard/'] },
+          sitemap: 'https://example.com/sitemap.xml',
+        }
+      }
+
+  url_structure:
+    rules:
+      - All URLs lowercase, hyphen-separated (no underscores, no camelCase)
+      - No trailing slashes (configure in next.config.ts: trailingSlash: false)
+      - Canonical tags on every page — prevent duplicate content penalties
+      - Redirect www to non-www or vice versa — pick one, enforce it
+      - 301 redirects for all changed URLs — configure in next.config.ts redirects
+
+  crawlability:
+    - Pages behind auth are not indexed (robots.txt + noindex meta)
+    - Paginated pages: use rel="next" / rel="prev" or canonical to first page
+    - All meaningful content must be in SSR/SSG HTML — not injected by JS
+    - Verify crawlability with "Inspect URL" in Google Search Console
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 8. COMPONENT ARCHITECTURE
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+components:
+
+  composition_rules:
+    - Single Responsibility: one component = one job
+    - Max file size: 200 lines. Split beyond this — no exceptions
+    - Prefer composition over configuration (renderProps, children slots)
+    - Never pass more than 5 props — extract a config object or split component
+    - Co-locate styles, tests, and types with the component file
+
+  props:
+    - Define prop types inline above component (not in separate file unless shared)
+    - Use ComponentPropsWithoutRef<'element'> for HTML element extensions
+    - Use forwardRef for components that need ref forwarding
+    - Destructure props at function signature level
+    - Use default values at destructuring, not inside function body
+
+  state_management:
+    local: "useState, useReducer — for UI-only state (open/closed, tab, etc.)"
+    server: "Server Components + RSC — for data from DB"
+    global_client: "Zustand or Jotai — for cross-component client state"
+    url: "useSearchParams + nuqs — for shareable/bookmarkable state"
+    form: "React Hook Form + Zod — for all forms, client and server"
+    rules:
+      - Do not use Context for frequently-updating state (re-renders)
+      - Do not use Redux — Zustand is sufficient and simpler
+      - Do not store derived data in state — compute it
+
+  error_boundaries:
+    - Every route segment has error.tsx and loading.tsx
+    - Async data components are wrapped in Suspense with meaningful fallback
+    - Never show raw error messages to users — sanitize and log
+    pattern: |
+      // app/(dashboard)/error.tsx
+      'use client'
+      export default function Error({ error, reset }: {
+        error: Error & { digest?: string }
+        reset: () => void
+      }) {
+        return <ErrorDisplay message="Something went wrong" onRetry={reset} />
+      }
+
+  accessibility:
+    - All interactive elements are keyboard navigable
+    - Use semantic HTML: <button>, <nav>, <main>, <header>, <footer>, <aside>
+    - ARIA attributes only when semantic HTML is insufficient
+    - Color contrast ratio: 4.5:1 minimum (7:1 for AAA)
+    - Focus indicators: visible and styled (do not remove outline without replacement)
+    - Screen reader text: use sr-only class for visually hidden but announced content
+    - All images: meaningful alt text or alt="" for decorative images
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 9. SECURITY
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+security:
+
+  authentication:
+    - Auth validation runs on the server — never trust client-side auth state for access control
+    - Middleware (middleware.ts) enforces route protection at edge
+    - Session tokens are HttpOnly, Secure, SameSite=Strict cookies
+    - Never store tokens in localStorage or sessionStorage
+
+  authorization:
+    - Check permissions on every Server Action and Route Handler
+    - Role checks happen server-side — never as a UI visibility toggle only
+    - Row-Level Security enforced at DB layer (not just application layer)
+
+  input_validation:
+    - ALL user input validated with Zod on the server — no exceptions
+    - Sanitize HTML content before rendering (DOMPurify or similar)
+    - Parameterized queries only — never string concatenation in SQL
+    - File uploads: validate type, size, and content (not just extension)
+
+  headers:
+    - Configure Content Security Policy (CSP) in next.config.ts headers()
+    - X-Frame-Options: DENY
+    - X-Content-Type-Options: nosniff
+    - Strict-Transport-Security: max-age=31536000; includeSubDomains
+    - Referrer-Policy: strict-origin-when-cross-origin
+    - Permissions-Policy: restrict camera, microphone, geolocation
+
+  secrets:
+    - No secrets in code, ever — use environment variables
+    - No secrets in NEXT_PUBLIC_ variables — those are public
+    - Rotate secrets if accidentally committed — immediately
+    - Use secret scanning in CI (GitHub secret scanning or truffleHog)
+
+  dependencies:
+    - Run pnpm audit on every PR
+    - No unvetted packages for auth, crypto, or payment flows
+    - Pin exact versions for security-critical packages
+    - Enable Dependabot or Renovate for automated security updates
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 10. TESTING STRATEGY
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+testing:
+
+  stack:
+    unit: "Vitest (not Jest — faster, native ESM)"
+    integration: "Vitest + Testing Library"
+    e2e: "Playwright"
+    visual: "Chromatic (Storybook) — optional"
+
+  coverage_gates:
+    business_logic: "90%+ (actions, queries, utilities)"
+    components: "70%+ (critical paths)"
+    e2e: "All user-facing critical flows"
+
+  rules:
+    - Test behavior, not implementation
+    - No snapshots for logic tests — use assertions
+    - Mock at the boundary (fetch, DB, external APIs) — not internal functions
+    - E2E tests run against staging — not production
+    - Unit tests run in CI on every push
+    - E2E tests run in CI on PR to main branch
+
+  co_location:
+    - Unit tests: [component].test.tsx beside the component file
+    - E2E tests: tests/e2e/[flow].spec.ts
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 11. API DESIGN (Route Handlers)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+api:
+
+  rules:
+    - Prefer Server Actions over Route Handlers for form mutations
+    - Route Handlers for: webhooks, external integrations, public APIs
+    - Every Route Handler validates auth before processing
+    - Every Route Handler validates input with Zod
+    - Return consistent response shape: { data?, error?, meta? }
+    - HTTP status codes must be semantically correct
+
+  versioning:
+    - Internal APIs (app-only): no versioning needed
+    - Public APIs: /api/v1/ prefix, semantic versioning in changelog
+
+  rate_limiting:
+    - Implement rate limiting on all public endpoints
+    - Use Upstash Redis + @upstash/ratelimit for edge-compatible limiting
+    - Return 429 with Retry-After header when rate limit hit
+
+  error_responses:
+    pattern: |
+      // Consistent API error shape
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'Field X is required' } },
+        { status: 400 }
+      )
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 12. CI/CD AND DEPLOYMENT
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+cicd:
+
+  pr_gates:  # All must pass before merge
+    - TypeScript compile: tsc --noEmit (zero errors, zero suppressed)
+    - Lint: ESLint with next/core-web-vitals + @typescript-eslint/strict
+    - Format: Prettier (zero diffs)
+    - Tests: Vitest (coverage gates met)
+    - Build: next build (zero warnings treated as errors)
+    - Lighthouse CI: scores above thresholds (section 6)
+    - Bundle size: bundle-analyzer budget check
+
+  environments:
+    development: local (next dev)
+    preview: Vercel preview (auto per PR)
+    staging: Vercel staging branch (manual promote)
+    production: Vercel production (merge to main, auto-deploy)
+
+  deployment_rules:
+    - Zero-downtime deploys only (Vercel handles this)
+    - Database migrations run before app deployment
+    - Feature flags used for large changes — not big-bang releases
+    - Rollback plan documented for every production deployment
+    - Never deploy on Fridays or before a holiday
+
+  monitoring:
+    errors: "Sentry (client + server, with source maps)"
+    analytics: "PostHog or Vercel Analytics (privacy-respecting)"
+    uptime: "Better Uptime or UptimeRobot with PagerDuty escalation"
+    logs: "Vercel logs (dev) → Axiom or Datadog (production)"
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 13. CODE QUALITY AND DX
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+code_quality:
+
+  linting:
+    config: ".eslintrc.json extends: ['next/core-web-vitals', '@typescript-eslint/strict']"
+    additional_rules:
+      - no-console: error (use a structured logger)
+      - no-unused-vars: error
+      - import/order: error (auto-fixable)
+      - @typescript-eslint/no-explicit-any: error
+      - @typescript-eslint/consistent-type-imports: error
+
+  formatting:
+    tool: "Prettier"
+    config:
+      semi: false
+      singleQuote: true
+      tabWidth: 2
+      trailingComma: "all"
+      printWidth: 100
+    rule: "Prettier runs on save in editor and on pre-commit hook"
+
+  git_hooks:
+    tool: "Husky + lint-staged"
+    pre_commit:
+      - "pnpm lint-staged"      # ESLint + Prettier on staged files
+    commit_msg:
+      - "Conventional Commits enforced: feat|fix|chore|docs|refactor|test|perf"
+
+  import_rules:
+    - Path aliases configured in tsconfig.json: @/* → src/*
+    - Absolute imports only — no relative imports beyond 1 level (../../../)
+    - Group imports: builtin → external → internal → relative
+    - Type-only imports: import type { X } from 'y'
+
+  comments:
+    - Code explains HOW. Comments explain WHY.
+    - No commented-out code committed. Delete it — git history preserves it.
+    - JSDoc on all public functions in lib/ and features/*/queries/
+    - TODO comments require a ticket reference: // TODO(TICKET-123): description
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 14. NEXT.CONFIG.TS — REQUIRED CONFIGURATION
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# This is the reference config. Do not remove keys without review.
+
+next_config_requirements: |
+  // next.config.ts
+  import type { NextConfig } from 'next'
+
+  const config: NextConfig = {
+    // TypeScript & ESLint — errors block build in CI
+    typescript: { ignoreBuildErrors: false },
+    eslint: { ignoreDuringBuilds: false },
+
+    // Strict production optimizations
+    reactStrictMode: true,
+    trailingSlash: false,
+    poweredByHeader: false,  // Remove X-Powered-By: Next.js header
+
+    // Image optimization
+    images: {
+      formats: ['image/avif', 'image/webp'],
+      remotePatterns: [], // Explicit allowlist only — no wildcards
+    },
+
+    // Security headers — applied to all routes
+    headers: async () => [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains; preload',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline'; ...",
+          },
+        ],
+      },
+    ],
+
+    // Permanent redirects
+    redirects: async () => [
+      // { source: '/old-path', destination: '/new-path', permanent: true },
+    ],
+
+    // Experimental (only stable features)
+    experimental: {
+      typedRoutes: true,  // Type-safe Link hrefs
+    },
+  }
+
+  export default config
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 15. LAYOUT SYSTEM — COMPACT PAGE DESIGN
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# PHILOSOPHY: Compact ≠ cramped. Every spacing value below is
+# deliberate — enough air to breathe, not enough to waste.
+# Whitespace is a design decision, not a default.
+# All values are Tailwind utility classes. No arbitrary values
+# unless a design token doesn't exist. No inline styles.
+
+layout:
+
+  # ── PAGE CONTAINER ────────────────────────────────────────
+  # The outer wrapper for every page. Max-width constrains
+  # content on wide screens. Horizontal padding prevents
+  # content from kissing the viewport edge on mobile.
+
+  page_container:
+    max_width: "max-w-6xl"           # 1152px — wide enough, not sprawling
+    horizontal_padding: "px-4 md:px-6 lg:px-8"
+    center: "mx-auto"
+    class: "mx-auto max-w-6xl px-4 md:px-6 lg:px-8"
+
+  # ── HOMEPAGE SECTION SPACING ───────────────────────────────
+  # Vertical space between major homepage sections (Hero,
+  # Features, Testimonials, CTA, Footer, etc.).
+  # Compact target: sections feel distinct but not disconnected.
+
+  section_gap:
+    mobile: "py-10"                  # 40px top + bottom per section
+    tablet: "md:py-14"              # 56px
+    desktop: "lg:py-16"             # 64px — ceiling, do not exceed
+    class: "py-10 md:py-14 lg:py-16"
+
+  # Sections that need visual separation (e.g. dark bg → light bg)
+  # get a divider OR a 4px extra gap — not both.
+  section_divider:
+    style: "border-t border-border"  # Single rule, 1px, theme color
+    alternative: "Use bg contrast shift between sections instead"
+
+  # ── WITHIN-SECTION INTERNAL SPACING ───────────────────────
+  # Space between the section header block and its content block.
+  # E.g. between the "Features" eyebrow+title+subtitle cluster
+  # and the feature card grid below it.
+
+  section_header_to_content_gap:
+    class: "mt-8 md:mt-10"          # 32px → 40px
+
+  # ── SECTION HEADER BLOCK (eyebrow + title + subtitle) ─────
+  # The stacked text cluster at the top of most sections.
+  # Compact rule: tight internal gaps, not loose.
+
+  section_header:
+    alignment: "text-center"         # Center on homepage, left on inner pages
+    max_width: "max-w-2xl mx-auto"   # 672px — prevents subtitle line sprawl
+
+    eyebrow_to_title_gap: "mb-2"     # 8px — eyebrow sits close to title
+    title_to_subtitle_gap: "mt-2"    # 8px — subtitle reads as caption to title
+    # Combined pattern:
+    pattern: |
+      <div className="max-w-2xl mx-auto text-center">
+        <p className="mb-2 text-sm uppercase tracking-widest text-muted-foreground">
+          Eyebrow Label
+        </p>
+        <h2 className="...">Section Title</h2>
+        <p className="mt-2 text-base text-muted-foreground">
+          Supporting subtitle — one or two lines maximum.
+        </p>
+      </div>
+
+  # ── HERO SECTION ──────────────────────────────────────────
+  # Homepage hero is the single exception to section_gap —
+  # it has its own vertical rhythm tied to viewport height.
+
+  hero:
+    vertical_padding: "pt-16 pb-12 md:pt-20 md:pb-16"
+    # pt: pushes content below the navbar
+    # pb: creates transition breathing room before next section
+
+    eyebrow_to_headline_gap: "mb-3"          # 12px
+    headline_to_subheadline_gap: "mt-3"      # 12px
+    subheadline_to_cta_gap: "mt-6 md:mt-8"  # 24px → 32px — deliberate pause
+    cta_to_social_proof_gap: "mt-4"          # 16px — social proof stays close to CTA
+
+    pattern: |
+      <section className="pt-16 pb-12 md:pt-20 md:pb-16">
+        <div className="mx-auto max-w-6xl px-4 md:px-6 lg:px-8 text-center">
+          <p className="mb-3 ...">Eyebrow</p>
+          <h1 className="...">Headline</h1>
+          <p className="mt-3 ...">Subheadline</p>
+          <div className="mt-6 md:mt-8 flex gap-3 justify-center">
+            {/* CTAs */}
+          </div>
+          <p className="mt-4 text-sm text-muted-foreground">Social proof</p>
+        </div>
+      </section>
+
+  # ── CARD GRIDS ────────────────────────────────────────────
+  # Feature cards, pricing cards, testimonial cards.
+  # Compact rule: gap between cards is smaller than section gap.
+
+  card_grid:
+    gap: "gap-4 md:gap-5"            # 16px → 20px between cards
+    columns:
+      2_col: "grid grid-cols-1 sm:grid-cols-2"
+      3_col: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+      4_col: "grid grid-cols-2 lg:grid-cols-4"
+
+  card_internal_padding: "p-5 md:p-6"   # 20px → 24px inside each card
+
+  card_internal_spacing:
+    icon_to_title: "mb-3"            # 12px — icon sits close to title
+    title_to_body: "mt-1"            # 4px — body is a direct annotation
+    # Compact: icon → title → body reads as one unit, not three separate items
+
+  # ── LIST / INLINE FEATURE ITEMS ───────────────────────────
+  # Check-list features, spec rows, stat blocks.
+
+  list_item_gap: "space-y-2"          # 8px between items — tight list
+  inline_icon_to_text_gap: "gap-2"    # 8px — icon + label inline
+
+  # ── CTA SECTIONS ──────────────────────────────────────────
+  # Mid-page and bottom CTA bands.
+
+  cta_section:
+    padding: "py-12 md:py-14"        # Slightly less than content sections
+    button_gap: "gap-3"              # 12px between primary + secondary CTA
+    title_to_buttons: "mt-6"         # 24px — strong pause before action
+
+  # ── NAVBAR ────────────────────────────────────────────────
+  navbar:
+    height: "h-14 md:h-16"           # 56px → 64px — compact, not floating
+    internal_padding: "px-4 md:px-6 lg:px-8"
+    nav_item_gap: "gap-1"            # 4px between nav links (padding handles click target)
+    nav_item_padding: "px-3 py-1.5"  # Click target: 12px h / 6px v
+
+  # ── FOOTER ────────────────────────────────────────────────
+  footer:
+    padding: "pt-10 pb-6 md:pt-12 md:pb-8"
+    column_gap: "gap-8 md:gap-12"
+    link_gap: "space-y-2"            # 8px between footer links
+    section_label_to_links: "mb-3"   # 12px — label close to its links
+
+  # ── SPACING SCALE REFERENCE ───────────────────────────────
+  # Only these Tailwind spacing values are permitted in layout
+  # contexts. Do not use arbitrary values like mt-[13px].
+  # If a value is not in this list, use the nearest one.
+  #
+  # 1  →  4px   (micro gaps: icon-to-text, badge padding)
+  # 2  →  8px   (tight pairs: title-to-subtitle, list items)
+  # 3  →  12px  (close siblings: eyebrow-to-title, card label-to-body)
+  # 4  →  16px  (default gap: social proof, footer links)
+  # 5  →  20px  (card gaps, form field gaps)
+  # 6  →  24px  (CTA separation, within-section breathing)
+  # 8  →  32px  (section header to content)
+  # 10 →  40px  (section vertical padding mobile)
+  # 12 →  48px  (CTA section padding)
+  # 14 →  56px  (section vertical padding tablet)
+  # 16 →  64px  (section vertical padding desktop — hard ceiling)
+  #
+  # NEVER use: mt-20, py-24, gap-10, mb-16 in homepage layout.
+  # Those values push the page into airy territory.
+
+  # ── ANTI-PATTERNS ─────────────────────────────────────────
+  layout_anti_patterns:
+    - "py-24 or py-32 on homepage sections — makes page feel sparse"
+    - "mb-8 between eyebrow and title — collapses the header cluster's unity"
+    - "gap-8 between cards — cards feel unrelated, not in a grid"
+    - "max-w-screen-2xl as page container — content stretches too wide"
+    - "No max-width on subtitle text — long lines break readability"
+    - "Inconsistent section padding — sections feel unrhythmic on scroll"
+    - "Padding inside a section AND margin on its children — double-stacking space"
+    - "Using pt/pb inconsistently across sections — always use py for sections"
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 16. AGENT INSTRUCTIONS — FOR AI CODING ASSISTANTS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Rules specifically for Cursor, Copilot, Codex, Claude, and
+# any other AI agent generating code in this repository.
+# Layout and spacing rules are in section 15 — read before building any page.
+
+agent_rules:
+
+  always:
+    - Read this file before generating any code
+    - Follow the directory structure in section 2 exactly
+    - Follow compact layout rules in section 15 for every page and component
+    - Use page_container class on every page wrapper: mx-auto max-w-6xl px-4 md:px-6 lg:px-8
+    - Use section gap class on every homepage section: py-10 md:py-14 lg:py-16
+    - Never exceed py-16 for any homepage section vertical padding
+    - TypeScript strict mode — no any, no non-null assertions
+    - Default to Server Components unless interactivity requires client
+    - Validate all inputs with Zod in actions and route handlers
+    - Use next/image for every image element
+    - Use next/font for every font — never CDN links
+    - Return { success, data, error } from Server Actions
+    - Write co-located tests for business logic you create
+    - Use semantic HTML — never <div> for interactive elements
+
+  never:
+    - Add 'use client' to page.tsx or layout.tsx
+    - Use useEffect to fetch data — use RSC async components
+    - Use any type — diagnose and type correctly
+    - Add inline styles — use Tailwind utility classes
+    - Use py-24, py-32, or any section padding above py-16
+    - Use mt-8 or larger between eyebrow and title
+    - Use gap-8 or larger between cards in a grid
+    - Use arbitrary spacing values like mt-[13px] — see spacing scale in section 15
+    - Introduce new dependencies without checking if existing ones cover the need
+    - Generate secrets, tokens, or credentials in code
+    - Leave console.log statements in committed code
+    - Create files outside the defined directory structure
+    - Use default exports for anything except Next.js page/layout/route files
+    - Duplicate metadata in both layout.tsx and page.tsx
+
+  before_creating_a_component:
+    1. "Check if it already exists in components/ui/ or features/"
+    2. "Determine RSC vs Client Component using section 4 decision tree"
+    3. "Identify if it needs data — fetch in RSC, pass as props to client"
+    4. "Check if a loading.tsx and error.tsx are needed for its route"
+
+  before_writing_a_server_action:
+    1. "Import Zod schema from features/[feature]/schemas/"
+    2. "Add 'use server' at file top (not function top)"
+    3. "Validate input before any DB call"
+    4. "Wrap in try/catch and return typed result"
+    5. "Call revalidatePath or revalidateTag after mutation"
+
+  before_adding_a_dependency:
+    1. "Check if Node.js stdlib or existing installed packages solve it"
+    2. "Check npm downloads, last publish date, open issues, license"
+    3. "Prefer packages with zero or minimal transitive dependencies"
+    4. "Add to devDependencies if only used in build/test/config"
+
+  code_generation_quality_bar:
+    - Generated code must pass TypeScript, ESLint, and Prettier without modification
+    - Generated components must include prop types
+    - Generated server actions must include Zod validation
+    - Generated functions must include JSDoc if in lib/ or queries/
+    - Generated tests must use describe/it blocks, not raw test() calls
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# END OF .cursorrules
+# Last updated: 2026-05
+# Owner: Engineering Lead
+# Sections: 16 (15 = Layout System, 16 = Agent Instructions)
+# Review cycle: Quarterly or after major framework upgrades
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

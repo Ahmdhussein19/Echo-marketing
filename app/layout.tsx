@@ -1,12 +1,9 @@
-import { Geist, Geist_Mono, Raleway, Manrope } from "next/font/google"
+import { Geist_Mono } from "next/font/google"
 
 import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
-import { cn } from "@/lib/utils";
-
-const manropeHeading = Manrope({subsets:['latin'],variable:'--font-heading'});
-
-const raleway = Raleway({subsets:['latin'],variable:'--font-sans'})
+import "./kinetic-nav.css"
+import { manrope, segoeUI } from "@/lib/fonts"
+import { cn } from "@/lib/utils"
 
 const fontMono = Geist_Mono({
   subsets: ["latin"],
@@ -21,12 +18,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", raleway.variable, manropeHeading.variable)}
+      className={cn(
+        "dark antialiased",
+        segoeUI.variable,
+        manrope.variable,
+        fontMono.variable,
+      )}
     >
-      <body>
-        <ThemeProvider>{children}</ThemeProvider>
-      </body>
+      <body className="font-sans">{children}</body>
     </html>
   )
 }
