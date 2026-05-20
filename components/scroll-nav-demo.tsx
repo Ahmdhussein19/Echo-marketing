@@ -5,43 +5,34 @@ import { motion } from "framer-motion"
 import { AgencyHero } from "@/components/ui/agency-hero"
 import { ScrollNavigationMenu } from "@/components/ui/scroll-navigation-menu"
 
-const SECTIONS = [
-  { id: "about", title: "About" },
-  { id: "services", title: "Services" },
-  { id: "contact", title: "Contact" },
-  { id: "info", title: "Info" },
-] as const
-
 export function ScrollNavDemo() {
   return (
     <ScrollNavigationMenu logoLabel="Echo">
       <AgencyHero />
 
-      <div className="bg-gradient-to-b from-muted/40 to-background">
-        <div className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-14 lg:px-8 lg:py-16">
-          <motion.div className="space-y-4 md:space-y-5">
-            {SECTIONS.map((section, index) => (
-              <motion.section
-                key={section.id}
-                id={section.id}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.55, delay: index * 0.08 }}
-                viewport={{ once: true, margin: "-80px" }}
-                className="rounded-2xl border border-border bg-card p-5 shadow-sm md:p-6"
-              >
-                <h2 className="text-2xl font-semibold text-foreground">
-                  {section.title}
-                </h2>
-                <p className="font-subtitle mt-1 leading-relaxed text-muted-foreground">
-                  Strategy, creative, and performance media — built as one cohesive
-                  system so every touchpoint reinforces your brand story.
-                </p>
-              </motion.section>
-            ))}
-          </motion.div>
+      <motion.section
+        id="about"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        viewport={{ once: true, margin: "-120px" }}
+        className="w-full border-y border-[var(--echo-border)] bg-[var(--echo-bg)]"
+      >
+        <div className="mx-auto max-w-5xl px-4 py-32 md:px-6 md:py-36 lg:px-8 lg:py-40">
+          <div className="grid gap-8 text-left md:grid-cols-[0.2fr_0.8fr] md:items-start">
+            <div className="flex h-full flex-col items-center justify-end text-center md:items-start md:text-left">
+              <span className="font-heading text-xl uppercase tracking-[0.08em] text-[var(--echo-text-1)] sm:text-2xl">
+                About
+              </span>
+            </div>
+            <p className="font-sans text-3xl font-black leading-tight text-[var(--echo-text-1)] md:text-4xl">
+              Blending years of web design and branding expertise to craft meaningful, story-driven
+              digital experiences.
+            </p>
+          </div>
         </div>
-      </div>
+      </motion.section>
+
     </ScrollNavigationMenu>
   )
 }

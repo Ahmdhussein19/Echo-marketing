@@ -1,14 +1,7 @@
-import { Geist_Mono } from "next/font/google"
-
 import "./globals.css"
 import "./kinetic-nav.css"
-import { manrope, segoeUI } from "@/lib/fonts"
+import { fredoka, manrope, spaceMono } from "@/lib/fonts"
 import { cn } from "@/lib/utils"
-
-const fontMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-})
 
 export default function RootLayout({
   children,
@@ -20,9 +13,9 @@ export default function RootLayout({
       lang="en"
       className={cn(
         "dark antialiased",
-        segoeUI.variable,
+        fredoka.variable,
         manrope.variable,
-        fontMono.variable,
+        spaceMono.variable,
       )}
     >
       <body className="font-sans">{children}</body>

@@ -2,7 +2,13 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type MouseEvent,
+} from "react"
 import gsap from "gsap"
 import { CustomEase } from "gsap/CustomEase"
 
@@ -27,6 +33,7 @@ export interface SterlingGateKineticNavigationProps {
   onOpenChange?: (open: boolean) => void
   showHeader?: boolean
   showOverlayOnly?: boolean
+  onNavigateLink?: (url: string, event: MouseEvent<HTMLAnchorElement>) => void
 }
 
 const defaultMenuItems: KineticNavMenuItem[] = [
@@ -284,10 +291,12 @@ function KineticMenuOverlay({
   menuItems,
   isMenuOpen,
   closeMenu,
+  onNavigateLink,
 }: {
   menuItems: KineticNavMenuItem[]
   isMenuOpen: boolean
   closeMenu: () => void
+  onNavigateLink?: (url: string, event: MouseEvent<HTMLAnchorElement>) => void
 }) {
   return (
     <section className="fullscreen-menu-container" aria-hidden={!isMenuOpen}>
@@ -426,7 +435,10 @@ function KineticMenuOverlay({
                   <Link
                     href={item.url}
                     className="nav-link"
-                    onClick={closeMenu}
+                    onClick={(event) => {
+                      onNavigateLink?.(item.url, event)
+                      closeMenu()
+                    }}
                   >
                     <p
                       className="nav-link-text"
@@ -455,6 +467,7 @@ export function SterlingGateKineticNavigation({
   onOpenChange,
   showHeader = true,
   showOverlayOnly = false,
+  onNavigateLink,
 }: SterlingGateKineticNavigationProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [internalOpen, setInternalOpen] = useState(false)
@@ -563,6 +576,7 @@ export function SterlingGateKineticNavigation({
         menuItems={menuItems}
         isMenuOpen={isMenuOpen}
         closeMenu={closeMenu}
+        onNavigateLink={onNavigateLink}
       />
 
       {children}
@@ -575,10 +589,12 @@ export function SterlingGateKineticMenuOverlay({
   menuItems = defaultMenuItems,
   isOpen,
   onClose,
+  onNavigateLink,
 }: {
   menuItems?: KineticNavMenuItem[]
   isOpen: boolean
   onClose: () => void
+  onNavigateLink?: (url: string, event: MouseEvent<HTMLAnchorElement>) => void
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -605,6 +621,7 @@ export function SterlingGateKineticMenuOverlay({
         menuItems={menuItems}
         isMenuOpen={isOpen}
         closeMenu={onClose}
+        onNavigateLink={onNavigateLink}
       />
     </div>
   )

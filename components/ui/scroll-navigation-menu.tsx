@@ -6,6 +6,7 @@ import {
   motion,
   useScroll,
   useMotionValueEvent,
+  useReducedMotion,
   type Variants,
 } from "framer-motion"
 import { Menu, Home, User, Settings, Mail, Info } from "lucide-react"
@@ -93,10 +94,46 @@ export function ScrollNavigationMenu({
   const [hoveredItem, setHoveredItem] = useState<number | null>(null)
 
   const { scrollY } = useScroll()
+  const prefersReducedMotion = useReducedMotion()
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     setIsScrolled(latest > 100)
   })
+
+  const scrollToHash = React.useCallback(
+    (hash: string) => {
+      if (typeof window === "undefined" || !hash.startsWith("#")) return false
+
+      const target = document.querySelector(hash) as HTMLElement | null
+      if (!target) return false
+
+      target.scrollIntoView({
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+        block: "start",
+      })
+
+      if (window.history.replaceState) {
+        window.history.replaceState(
+          null,
+          "",
+          window.location.pathname + window.location.search,
+        )
+      }
+
+      return true
+    },
+    [prefersReducedMotion],
+  )
+
+  const handleNavLinkClick = React.useCallback(
+    (url: string, event: React.MouseEvent<HTMLAnchorElement>) => {
+      if (!url.startsWith("#")) return false
+
+      event.preventDefault()
+      return scrollToHash(url)
+    },
+    [scrollToHash],
+  )
 
   const toggleMenu = () => setIsMenuOpen((open) => !open)
   const closeMenu = () => setIsMenuOpen(false)
@@ -150,6 +187,10 @@ export function ScrollNavigationMenu({
                     <Link
                       href={item.url}
                       className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:text-primary"
+                      onClick={(event) => {
+                        const handled = handleNavLinkClick(item.url, event)
+                        if (handled) closeMenu()
+                      }}
                     >
                       {item.icon}
                       <span>{item.title}</span>
@@ -213,6 +254,7 @@ export function ScrollNavigationMenu({
         menuItems={kineticMenuItems}
         isOpen={isMenuOpen}
         onClose={closeMenu}
+        onNavigateLink={handleNavLinkClick}
       />
 
       <motion.div>{children}</motion.div>

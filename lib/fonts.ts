@@ -1,46 +1,25 @@
+import { Fredoka, Space_Mono } from "next/font/google"
 import localFont from "next/font/local"
 
-/** Titles — Segoe UI */
-export const segoeUI = localFont({
-  src: [
-    {
-      path: "../public/fonts/segoe-ui-4-cufonfonts/Segoe UI.ttf",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "../public/fonts/segoe-ui-4-cufonfonts/Segoe UI Italic.ttf",
-      weight: "400",
-      style: "italic",
-    },
-    {
-      path: "../public/fonts/segoe-ui-4-cufonfonts/Segoe UI Bold.ttf",
-      weight: "700",
-      style: "normal",
-    },
-    {
-      path: "../public/fonts/segoe-ui-4-cufonfonts/Segoe UI Bold Italic.ttf",
-      weight: "700",
-      style: "italic",
-    },
-  ],
+/** Display — Fredoka (headlines, service names, metric values, logo) */
+export const fredoka = Fredoka({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
   variable: "--font-heading",
   display: "swap",
 })
 
-/** Body & subtitles — Manrope */
+/** Labels — Space Mono (badges, nav links, tags, captions, section labels) */
+export const spaceMono = Space_Mono({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-mono",
+  display: "swap",
+})
+
+/** Body — Manrope (descriptions, body copy, paragraphs) */
 export const manrope = localFont({
   src: [
-    {
-      path: "../public/fonts/Manrope/Manrope-ExtraLight.ttf",
-      weight: "200",
-      style: "normal",
-    },
-    {
-      path: "../public/fonts/Manrope/Manrope-Light.ttf",
-      weight: "300",
-      style: "normal",
-    },
     {
       path: "../public/fonts/Manrope/Manrope-Regular.ttf",
       weight: "400",
@@ -54,16 +33,6 @@ export const manrope = localFont({
     {
       path: "../public/fonts/Manrope/Manrope-SemiBold.ttf",
       weight: "600",
-      style: "normal",
-    },
-    {
-      path: "../public/fonts/Manrope/Manrope-Bold.ttf",
-      weight: "700",
-      style: "normal",
-    },
-    {
-      path: "../public/fonts/Manrope/Manrope-ExtraBold.ttf",
-      weight: "800",
       style: "normal",
     },
   ],
