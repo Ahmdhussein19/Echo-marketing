@@ -9,6 +9,7 @@ import {
   type Variants,
 } from "framer-motion"
 import { Menu, Home, User, Settings, Mail, Info } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 
 import {
@@ -111,20 +112,27 @@ export function ScrollNavigationMenu({
         }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className={cn(
-          "fixed top-0 right-0 left-0 z-50 border-b border-border bg-background/80 backdrop-blur-md",
+          "fixed top-0 right-0 left-0 z-50",
           className,
         )}
         aria-label="Main navigation"
       >
-        <motion.div className="mx-auto max-w-6xl px-4 md:px-6 lg:px-8">
+        <motion.div className="px-4 md:px-6 lg:px-8">
           <div className="flex h-14 items-center justify-between md:h-16">
             <motion.div
               className="shrink-0"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Link href="/" className="text-2xl font-bold text-foreground">
-                {logoLabel}
+              <Link href="/" className="flex items-center">
+                <Image
+                  src="/Echo.svg"
+                  alt="Echo"
+                  width={120}
+                  height={40}
+                  className="h-8 w-auto md:h-10"
+                  priority
+                />
               </Link>
             </motion.div>
 
@@ -207,7 +215,7 @@ export function ScrollNavigationMenu({
         onClose={closeMenu}
       />
 
-      <motion.div className="pt-14 md:pt-16">{children}</motion.div>
+      <motion.div>{children}</motion.div>
     </>
   )
 }

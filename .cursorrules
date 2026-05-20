@@ -1,6 +1,7 @@
 ---
 description: 
 alwaysApply: true
+NEVER BREAK THESE RULES - NEVER ASSUME - ALWAYS ASK - ALWAYS CHECK.
 ---
 
 # ============================================================
@@ -30,55 +31,55 @@ node_version: ">=20.0.0"
 # 2. DIRECTORY ARCHITECTURE (App Router)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# Enforce this structure. Do not create files outside of it
-# without explicit architectural justification in a PR.
-#
-# src/
-# ├── app/                        ← Next.js App Router root
-# │   ├── (marketing)/            ← Route group: public pages
-# │   │   ├── page.tsx            ← Landing page (SSG)
-# │   │   └── layout.tsx
-# │   ├── (dashboard)/            ← Route group: auth-protected
-# │   │   ├── layout.tsx          ← Shared dashboard shell
-# │   │   └── [feature]/
-# │   │       └── page.tsx
-# │   ├── api/                    ← Route Handlers only
-# │   │   └── [resource]/
-# │   │       └── route.ts
-# │   ├── layout.tsx              ← Root layout (fonts, providers)
-# │   ├── not-found.tsx
-# │   └── error.tsx
-# │
-# ├── features/                   ← Feature-first domain modules
-# │   └── [feature-name]/
-# │       ├── components/         ← Feature-scoped UI
-# │       ├── hooks/              ← Feature-scoped hooks
-# │       ├── actions/            ← Server Actions (server-only)
-# │       ├── queries/            ← Data fetching functions
-# │       ├── schemas/            ← Zod validation schemas
-# │       ├── types.ts            ← Feature-scoped types
-# │       └── index.ts            ← Barrel export
-# │
-# ├── components/
-# │   ├── ui/                     ← Primitives (shadcn, radix)
-# │   └── shared/                 ← Cross-feature components
-# │
-# ├── lib/
-# │   ├── db/                     ← DB client + query helpers
-# │   ├── auth/                   ← Auth utilities
-# │   ├── validations/            ← Shared Zod schemas
-# │   └── utils.ts                ← Pure utility functions only
-# │
-# ├── hooks/                      ← Global client hooks
-# ├── stores/                     ← Global state (Zustand/Jotai)
-# ├── types/                      ← Global TypeScript types
-# ├── config/                     ← App config, constants
-# └── styles/                     ← Global CSS, Tailwind base
-#
-# public/
-# ├── images/                     ← Static images (WebP preferred)
-# ├── fonts/                      ← Self-hosted fonts only
-# └── icons/                      ← SVG sprite or individual SVGs
+ Enforce this structure. Do not create files outside of it
+ without explicit architectural justification in a PR.
+
+ src/
+ ├── app/                        ← Next.js App Router root
+ │   ├── (marketing)/            ← Route group: public pages
+ │   │   ├── page.tsx            ← Landing page (SSG)
+ │   │   └── layout.tsx
+ │   ├── (dashboard)/            ← Route group: auth-protected
+ │   │   ├── layout.tsx          ← Shared dashboard shell
+ │   │   └── [feature]/
+ │   │       └── page.tsx
+ │   ├── api/                    ← Route Handlers only
+ │   │   └── [resource]/
+ │   │       └── route.ts
+ │   ├── layout.tsx              ← Root layout (fonts, providers)
+ │   ├── not-found.tsx
+ │   └── error.tsx
+ │
+ ├── features/                   ← Feature-first domain modules
+ │   └── [feature-name]/
+ │       ├── components/         ← Feature-scoped UI
+ │       ├── hooks/              ← Feature-scoped hooks
+ │       ├── actions/            ← Server Actions (server-only)
+ │       ├── queries/            ← Data fetching functions
+ │       ├── schemas/            ← Zod validation schemas
+ │       ├── types.ts            ← Feature-scoped types
+ │       └── index.ts            ← Barrel export
+ │
+ ├── components/
+ │   ├── ui/                     ← Primitives (shadcn, radix)
+ │   └── shared/                 ← Cross-feature components
+ │
+ ├── lib/
+ │   ├── db/                     ← DB client + query helpers
+ │   ├── auth/                   ← Auth utilities
+ │   ├── validations/            ← Shared Zod schemas
+ │   └── utils.ts                ← Pure utility functions only
+ │
+ ├── hooks/                      ← Global client hooks
+ ├── stores/                     ← Global state (Zustand/Jotai)
+ ├── types/                      ← Global TypeScript types
+ ├── config/                     ← App config, constants
+ └── styles/                     ← Global CSS, Tailwind base
+
+ public/
+ ├── images/                     ← Static images (WebP preferred)
+ ├── fonts/                      ← Self-hosted fonts only
+ └── icons/                      ← SVG sprite or individual SVGs
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
