@@ -1,7 +1,35 @@
 import { Fredoka, Space_Mono } from "next/font/google"
 import localFont from "next/font/local"
 
-/** Display — Fredoka (headlines, service names, metric values, logo) */
+/** Services — Segoe UI (service list titles) */
+export const segoeUI = localFont({
+  src: [
+    {
+      path: "../public/fonts/segoe-ui-4-cufonfonts/Segoe UI.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/segoe-ui-4-cufonfonts/Segoe UI Italic.ttf",
+      weight: "400",
+      style: "italic",
+    },
+    {
+      path: "../public/fonts/segoe-ui-4-cufonfonts/Segoe UI Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/segoe-ui-4-cufonfonts/Segoe UI Bold Italic.ttf",
+      weight: "700",
+      style: "italic",
+    },
+  ],
+  variable: "--font-segoe",
+  display: "swap",
+})
+
+/** Display — Fredoka (headlines, metric values, logo) */
 export const fredoka = Fredoka({
   subsets: ["latin"],
   weight: ["500", "600", "700"],

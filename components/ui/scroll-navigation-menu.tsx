@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   motion,
   useScroll,
@@ -17,6 +17,7 @@ import {
   SterlingGateKineticMenuOverlay,
   type KineticNavMenuItem,
 } from "@/components/ui/sterling-gate-kinetic-navigation"
+import { useIsMounted } from "@/hooks/use-is-mounted"
 import { cn } from "@/lib/utils"
 
 export interface ScrollNavMenuItem {
@@ -93,12 +94,18 @@ export function ScrollNavigationMenu({
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<number | null>(null)
 
+  const isMounted = useIsMounted()
   const { scrollY } = useScroll()
   const prefersReducedMotion = useReducedMotion()
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     setIsScrolled(latest > 100)
   })
+
+  useEffect(() => {
+    if (!isMounted) return
+    setIsScrolled(window.scrollY > 100)
+  }, [isMounted])
 
   const scrollToHash = React.useCallback(
     (hash: string) => {
@@ -138,21 +145,27 @@ export function ScrollNavigationMenu({
   const toggleMenu = () => setIsMenuOpen((open) => !open)
   const closeMenu = () => setIsMenuOpen(false)
   const kineticMenuItems = toKineticMenuItems(menuItems)
+  const showFloatingMenu = isMounted && isScrolled
 
   return (
     <>
       <motion.nav
-        initial={{ y: 0, opacity: 1 }}
-        animate={{
-          y: isScrolled ? -100 : 0,
-          opacity: isScrolled ? 0 : 1,
-        }}
+        initial={false}
+        animate={
+          isMounted
+            ? {
+                y: isScrolled ? -100 : 0,
+                opacity: isScrolled ? 0 : 1,
+              }
+            : false
+        }
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className={cn(
           "fixed top-0 right-0 left-0 z-50",
           className,
         )}
         aria-label="Main navigation"
+        suppressHydrationWarning
       >
         <motion.div className="px-4 md:px-6 lg:px-8">
           <div className="flex h-14 items-center justify-between md:h-16">
@@ -227,17 +240,26 @@ export function ScrollNavigationMenu({
       </motion.nav>
 
       <motion.div
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{
-          scale: isScrolled ? 1 : 0,
-          opacity: isScrolled ? 1 : 0,
-        }}
+        initial={false}
+        animate={
+          isMounted
+            ? {
+                scale: isScrolled ? 1 : 0,
+                opacity: isScrolled ? 1 : 0,
+              }
+            : false
+        }
         transition={{ duration: 0.3, ease: "easeInOut" }}
-        className="fixed top-6 right-6 z-50"
+        className={cn(
+          "fixed top-6 right-6 z-50 origin-center",
+          !showFloatingMenu && "pointer-events-none scale-0 opacity-0",
+        )}
+        aria-hidden={!showFloatingMenu}
       >
         <motion.button
           type="button"
           onClick={toggleMenu}
+          tabIndex={showFloatingMenu ? 0 : -1}
           className="flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"
           variants={hamburgerVariants}
           animate={isScrolled ? "scrolled" : "normal"}
