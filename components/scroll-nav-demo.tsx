@@ -15,7 +15,13 @@ import {
   type ServiceMediaItem,
 } from "@/components/ui/service-media-bento"
 import { ScrollNavigationMenu } from "@/components/ui/scroll-navigation-menu"
+import { WhyUsSection } from "@/components/ui/why-us-section"
 import { useIsMounted } from "@/hooks/use-is-mounted"
+import { useInView } from "@/hooks/use-in-view"
+import {
+  serviceEntranceContainerVariants,
+  serviceEntranceItemVariants,
+} from "@/lib/service-entrance-motion"
 
 const ABOUT_COPY =
   "Blending years of web design and branding expertise to craft meaningful, story-driven digital experiences."
@@ -268,14 +274,14 @@ function GlowParagraph({ progress }: GlowParagraphProps) {
 
   if (!progress || !isMounted) {
     return (
-      <p className="font-sans text-3xl leading-tight font-black text-[var(--echo-text-1)] md:text-4xl">
+      <p className="font-sans text-3xl leading-tight font-black text-[var(--echo-text-1)] md:text-5xl">
         {ABOUT_COPY}
       </p>
     )
   }
 
   return (
-    <p className="font-sans text-3xl leading-tight font-black md:text-4xl">
+    <p className="font-sans text-3xl leading-tight font-black md:text-5xl">
       {ABOUT_WORDS.map((word, wordIndex) => (
         <span
           key={`word-${wordIndex}`}
@@ -439,40 +445,91 @@ function TrackProgressItem({
       }
     : SERVICE_TITLE_STATIC_STYLE
   const itemNumber = String(index + 1).padStart(2, "0")
+  const { isInView: isRowInView } = useInView<HTMLDivElement>({
+    enabled: prefersReducedMotion !== true,
+    ref,
+    resetOnLeave: false,
+    threshold: 0.2,
+  })
+
+  const titleBlock = (
+    <figure className="max-md:static md:sticky top-[calc(var(--nav-height)+24px)] z-10 m-0 w-full self-start p-0 text-left">
+      <p
+        aria-hidden
+        className="echo-text-outline mb-3 font-heading text-6xl leading-none font-bold md:text-7xl lg:text-8xl"
+      >
+        {itemNumber}
+      </p>
+      <motion.h3
+        style={titleStyle}
+        className="py-0 font-segoe text-4xl leading-[0.9] font-bold md:text-6xl lg:text-7xl"
+      >
+        {title}
+      </motion.h3>
+    </figure>
+  )
+
+  const descriptionBlock =
+    description ? (
+      <ServiceDescription
+        description={description}
+        fadeInProgress={scrollYProgress}
+        titleColorProgress={titleColorProgress}
+        titleShadowProgress={titleShadowProgress}
+        useScrollStyles={useScrollStyles}
+      />
+    ) : null
 
   return (
-    <section className="flex h-screen max-h-[720px] items-center justify-center px-4 md:px-6 lg:px-8">
+    <section className="flex h-screen max-h-[720px] items-center justify-center px-4 max-md:h-auto max-md:min-h-0 max-md:py-10 md:px-6 lg:px-8">
       <div
         ref={ref}
-        className="mx-auto grid w-full max-w-7xl grid-cols-1 items-start gap-8 md:grid-cols-[2fr_2.75fr]"
+        className="mx-auto grid w-full max-w-7xl grid-cols-1 items-start gap-8 max-md:gap-10 md:grid-cols-[2fr_2.75fr]"
       >
-        <div className="relative flex min-h-[460px] flex-col justify-between">
-          <figure className="sticky top-[calc(var(--nav-height)+24px)] z-10 m-0 w-full self-start p-0 text-left">
-            <p
-              aria-hidden
-              className="echo-text-outline mb-3 font-heading text-6xl leading-none font-bold md:text-7xl lg:text-8xl"
+        <div className="relative flex min-h-[460px] flex-col justify-between max-md:min-h-0 max-md:justify-start max-md:gap-6">
+          {prefersReducedMotion ? (
+            <>
+              {titleBlock}
+              {descriptionBlock}
+            </>
+          ) : (
+            <motion.div
+              animate={isRowInView ? "visible" : "hidden"}
+              className="flex min-h-[460px] flex-col justify-between max-md:min-h-0 max-md:justify-start max-md:gap-6"
+              initial="hidden"
+              variants={serviceEntranceContainerVariants}
             >
-              {itemNumber}
-            </p>
-            <motion.h3
-              style={titleStyle}
-              className="py-0 font-segoe text-4xl leading-tight font-bold md:text-6xl lg:text-7xl"
-            >
-              {title}
-            </motion.h3>
-          </figure>
-          {description ? (
-            <ServiceDescription
-              description={description}
-              fadeInProgress={scrollYProgress}
-              titleColorProgress={titleColorProgress}
-              titleShadowProgress={titleShadowProgress}
-              useScrollStyles={useScrollStyles}
-            />
-          ) : null}
+              <motion.figure
+                className="max-md:static md:sticky md:top-[calc(var(--nav-height)+24px)] z-10 m-0 w-full origin-bottom self-start p-0 text-left"
+                variants={serviceEntranceItemVariants}
+              >
+                <p
+                  aria-hidden
+                  className="echo-text-outline mb-3 font-heading text-6xl leading-none font-bold md:text-7xl lg:text-8xl"
+                >
+                  {itemNumber}
+                </p>
+                <motion.h3
+                  style={titleStyle}
+                  className="py-0 font-segoe text-4xl leading-[0.9] font-bold md:text-6xl lg:text-7xl"
+                >
+                  {title}
+                </motion.h3>
+              </motion.figure>
+              {descriptionBlock ? (
+                <motion.div className="origin-bottom" variants={serviceEntranceItemVariants}>
+                  {descriptionBlock}
+                </motion.div>
+              ) : null}
+            </motion.div>
+          )}
         </div>
-        <div className="flex h-[460px] w-full items-center justify-center">
-          <ServiceMediaBento images={images ?? []} placeholder={itemNumber} />
+        <div className="flex h-[460px] w-full items-center justify-center max-md:h-[min(360px,62vw)]">
+          <ServiceMediaBento
+            images={images ?? []}
+            isInView={isRowInView}
+            placeholder={itemNumber}
+          />
         </div>
       </div>
     </section>
@@ -481,7 +538,7 @@ function TrackProgressItem({
 
 function TrackElementWithinViewport() {
   return (
-    <section id="progress-track" className="bg-[var(--echo-bg)] py-20 md:py-28">
+    <section id="progress-track" className="bg-[var(--echo-bg)] py-20 max-md:pb-28 md:py-28">
       <div className="mx-auto max-w-5xl px-4 text-center md:px-6 lg:px-8">
         <h2 className="font-heading text-5xl leading-[0.9] font-bold text-[var(--echo-title-1)] uppercase md:text-7xl lg:text-8xl">
           WHAT WE DO
@@ -512,6 +569,7 @@ function TopScrollVanish() {
 }
 
 export function ScrollNavDemo() {
+  const isMounted = useIsMounted()
   const transitionRef = useRef<HTMLElement>(null)
   const prefersReducedMotion = useReducedMotion()
   const { scrollYProgress } = useScroll({
@@ -520,14 +578,16 @@ export function ScrollNavDemo() {
   })
   const aboutY = useTransform(scrollYProgress, [0, 0.45], ["100vh", "0vh"])
   const aboutTextProgress = useTransform(scrollYProgress, [0.45, 1], [0, 1])
+  const useReducedLayout = isMounted && prefersReducedMotion === true
 
-  if (prefersReducedMotion) {
+  if (useReducedLayout) {
     return (
       <ScrollNavigationMenu logoLabel="Echo">
         <TopScrollVanish />
         <AgencyHero />
         <AboutSection />
         <TrackElementWithinViewport />
+        <WhyUsSection />
       </ScrollNavigationMenu>
     )
   }
@@ -551,6 +611,7 @@ export function ScrollNavDemo() {
       </section>
 
       <TrackElementWithinViewport />
+      <WhyUsSection />
     </ScrollNavigationMenu>
   )
 }

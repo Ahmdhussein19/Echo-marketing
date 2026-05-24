@@ -1,6 +1,6 @@
 "use client"
 
-import { useReducedMotion } from "framer-motion"
+import { motion, useReducedMotion } from "framer-motion"
 import Image from "next/image"
 import { useEffect, useRef, useState, type RefObject } from "react"
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
@@ -12,6 +12,10 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart"
 import { useInView } from "@/hooks/use-in-view"
+import {
+  serviceEntranceTransition,
+  serviceEntranceVariants,
+} from "@/lib/service-entrance-motion"
 import { cn } from "@/lib/utils"
 
 export interface ServiceMediaImage {
@@ -56,6 +60,7 @@ export type ServiceMediaItem =
 
 interface ServiceMediaBentoProps {
   images: ServiceMediaItem[]
+  isInView?: boolean
   placeholder?: string
 }
 
@@ -91,7 +96,41 @@ const ROW_START_CLASS = {
   2: "row-start-2",
 } as const
 
-const GRID_CLASS_NAME = "grid h-[460px] w-full grid-cols-3 grid-rows-2 gap-4"
+const GRID_CLASS_NAME =
+  "grid h-[min(360px,62vw)] w-full grid-cols-3 grid-rows-2 gap-4 md:h-[460px]"
+
+function ServiceMediaBentoGrid({
+  children,
+  isInView: isInViewProp,
+}: {
+  children: React.ReactNode
+  isInView?: boolean
+}) {
+  const prefersReducedMotion = useReducedMotion()
+  const { containerRef, isInView: internalInView } = useInView<HTMLDivElement>({
+    enabled: prefersReducedMotion !== true && isInViewProp === undefined,
+    resetOnLeave: false,
+    threshold: 0.2,
+  })
+  const isInView = isInViewProp ?? internalInView
+
+  if (prefersReducedMotion) {
+    return <div className={GRID_CLASS_NAME}>{children}</div>
+  }
+
+  return (
+    <motion.div
+      ref={isInViewProp === undefined ? containerRef : undefined}
+      animate={isInView ? "visible" : "hidden"}
+      className={cn(GRID_CLASS_NAME, "origin-bottom")}
+      initial="hidden"
+      transition={serviceEntranceTransition}
+      variants={serviceEntranceVariants}
+    >
+      {children}
+    </motion.div>
+  )
+}
 
 function getDefaultPlacement(count: number, index: number): BentoPlacement {
   if (count === 1) {
@@ -221,6 +260,7 @@ function SeoGrowthChart({ alt, animate }: { alt: string; animate: boolean }) {
           ))}
         </div>
         <ChartContainer
+          id="seo-growth-chart"
           className="absolute inset-x-0 top-1 h-[86%] w-full"
           config={chartConfig}
         >
@@ -480,22 +520,23 @@ function ServiceMediaPlaceholder({
 
 export function ServiceMediaBento({
   images,
+  isInView,
   placeholder,
 }: ServiceMediaBentoProps) {
   if (images.length === 0) {
     return (
-      <div className={GRID_CLASS_NAME}>
+      <ServiceMediaBentoGrid isInView={isInView}>
         <ServiceMediaPlaceholder
           colSpan={3}
           label={placeholder ?? "00"}
           rowSpan={2}
         />
-      </div>
+      </ServiceMediaBentoGrid>
     )
   }
 
   return (
-    <div className={GRID_CLASS_NAME}>
+    <ServiceMediaBentoGrid isInView={isInView}>
       {images.map((image, index) => {
         const defaults = getDefaultPlacement(images.length, index)
         const itemKey =
@@ -514,6 +555,6 @@ export function ServiceMediaBento({
           />
         )
       })}
-    </div>
+    </ServiceMediaBentoGrid>
   )
 }

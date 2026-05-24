@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState, type RefObject } from "react"
 
-interface UseInViewOptions {
+interface UseInViewOptions<T extends HTMLElement> {
   enabled?: boolean
+  ref?: RefObject<T | null>
   resetOnLeave?: boolean
   threshold?: number
 }
@@ -15,10 +16,16 @@ interface UseInViewResult<T extends HTMLElement> {
 
 /** Tracks whether an element is visible in the viewport. */
 export function useInView<T extends HTMLElement>(
-  options: UseInViewOptions = {},
+  options: UseInViewOptions<T> = {},
 ): UseInViewResult<T> {
-  const { enabled = true, resetOnLeave = true, threshold = 0.35 } = options
-  const containerRef = useRef<T>(null)
+  const {
+    enabled = true,
+    ref: externalRef,
+    resetOnLeave = true,
+    threshold = 0.35,
+  } = options
+  const internalRef = useRef<T>(null)
+  const containerRef = externalRef ?? internalRef
   const [isInView, setIsInView] = useState(false)
 
   useEffect(() => {
@@ -51,7 +58,7 @@ export function useInView<T extends HTMLElement>(
     return () => {
       observer.disconnect()
     }
-  }, [enabled, resetOnLeave, threshold])
+  }, [containerRef, enabled, resetOnLeave, threshold])
 
   return { containerRef, isInView }
 }

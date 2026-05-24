@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   LayoutGroup,
   motion,
@@ -53,6 +53,21 @@ const slideDownVariants: Variants = {
   }),
 }
 
+const slideUpImageVariants: Variants = {
+  hidden: { opacity: 0, y: 60 },
+  visible: (delay = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 1.1,
+      delay: 0.35 + delay,
+      ease: [0.25, 0.4, 0.25, 1],
+    },
+  }),
+}
+
+const HERO_PORTRAIT_SRC = "/images/image 13 (1).webp"
+
 export interface AgencyHeroProps {
   className?: string
   scrollProgress?: MotionValue<number>
@@ -69,6 +84,15 @@ export function AgencyHero({ className, scrollProgress }: AgencyHeroProps) {
   const statsMotion = useEntranceMotion("hero-stats")
   const scrollHintMotion = useEntranceMotion("hero-scroll-hint")
   const heroEntranceClass = headlineMotion.shouldAnimate ? "hero-entrance" : undefined
+  const heroPortraitRef = useRef<HTMLImageElement>(null)
+  const [heroPortraitReady, setHeroPortraitReady] = useState(false)
+
+  useEffect(() => {
+    const portrait = heroPortraitRef.current
+    if (portrait?.complete) {
+      setHeroPortraitReady(true)
+    }
+  }, [])
 
   const { scrollYProgress: internalScrollProgress } = useScroll({
     target: sectionRef,
@@ -158,7 +182,7 @@ export function AgencyHero({ className, scrollProgress }: AgencyHeroProps) {
           animate={headlineMotion.animate}
           custom={0.25}
           className={cn(
-            "relative z-10 flex w-full flex-col items-start px-4 text-left md:px-6 lg:px-8",
+            "relative z-10 flex w-full flex-col items-start px-4 text-left max-md:py-24 md:px-6 md:py-0 lg:px-8",
             heroEntranceClass,
           )}
         >
@@ -169,7 +193,7 @@ export function AgencyHero({ className, scrollProgress }: AgencyHeroProps) {
             custom={0.3}
             className="max-w-5xl"
           >
-            <h1 className="font-heading text-4xl font-bold leading-[0.9] text-[var(--echo-title-1)] sm:text-5xl md:text-7xl lg:text-[clamp(60px,8.5vw,116px)] mt-16 sm:mt-20 md:mt-32 uppercase tracking-tight">
+            <h1 className="font-heading mt-0 text-[2.75rem] font-bold leading-[0.9] text-[var(--echo-title-1)] sm:text-5xl md:mt-32 md:text-7xl lg:text-[clamp(60px,8.5vw,116px)] uppercase tracking-tight">
               <span className="block">We make</span>
               <span className="block">YOUR BRAND</span>
               <LayoutGroup>
@@ -179,7 +203,7 @@ export function AgencyHero({ className, scrollProgress }: AgencyHeroProps) {
                     {isMounted ? (
                       <TextRotate
                         texts={ROTATING_WORDS}
-                        mainClassName="text-[var(--echo-orange)] text-4xl sm:text-5xl md:text-7xl lg:text-[clamp(60px,8.5vw,116px)]"
+                        mainClassName="text-[var(--echo-orange)] text-[2.75rem] sm:text-5xl md:text-7xl lg:text-[clamp(60px,8.5vw,116px)]"
                         staggerDuration={0.025}
                         staggerFrom="last"
                         rotationInterval={2800}
@@ -191,7 +215,7 @@ export function AgencyHero({ className, scrollProgress }: AgencyHeroProps) {
                     ) : (
                       <span
                         aria-hidden
-                        className="text-[var(--echo-orange)] text-4xl sm:text-5xl md:text-7xl lg:text-[clamp(60px,8.5vw,116px)] opacity-0"
+                        className="text-[var(--echo-orange)] text-[2.75rem] opacity-0 sm:text-5xl md:text-7xl lg:text-[clamp(60px,8.5vw,116px)]"
                       >
                         {ROTATING_WORDS[0]}
                       </span>
@@ -201,6 +225,18 @@ export function AgencyHero({ className, scrollProgress }: AgencyHeroProps) {
               </LayoutGroup>
             </h1>
           </motion.div>
+
+          <motion.div
+            variants={slideUpVariants}
+            initial={ctaMotion.initial}
+            animate={ctaMotion.animate}
+            custom={0.55}
+            className={cn("relative z-20 mt-6 md:hidden", heroEntranceClass)}
+          >
+            <AeroButton className="mx-0 justify-start" onClick={scrollToContactSection}>
+              Start a project
+            </AeroButton>
+          </motion.div>
         </motion.div>
 
         <motion.div
@@ -209,7 +245,7 @@ export function AgencyHero({ className, scrollProgress }: AgencyHeroProps) {
           animate={ctaMotion.animate}
           custom={0.55}
           className={cn(
-            "absolute left-1/2 top-[70%] z-10 -translate-x-1/2 -translate-y-1/2",
+            "absolute left-1/2 top-[70%] z-20 hidden -translate-x-1/2 -translate-y-1/2 md:block",
             heroEntranceClass,
           )}
         >
@@ -219,28 +255,29 @@ export function AgencyHero({ className, scrollProgress }: AgencyHeroProps) {
         </motion.div>
 
         <motion.div
-          variants={slideUpVariants}
+          variants={slideUpImageVariants}
           initial={imageMotion.initial}
           animate={imageMotion.animate}
           custom={0.1}
           className={cn(
-            "absolute bottom-0 right-[15%] z-10",
+            "absolute bottom-0 right-[5%] z-[1] max-md:right-[2%] md:right-[15%] md:z-10",
             heroEntranceClass,
           )}
         >
-          <div className="relative">
-            <img
-              src="/images/image 13 (1).webp"
-              alt=""
-              className="h-auto w-[25vw] object-contain"
-            />
-            <img
-              src="/images/image 13 (1).webp"
-              alt=""
-              aria-hidden
-              className="pointer-events-none absolute inset-0 -z-10 h-full w-full scale-110 rounded-[32px] blur-3xl opacity-60"
-            />
-          </div>
+          <img
+            ref={heroPortraitRef}
+            src={HERO_PORTRAIT_SRC}
+            alt=""
+            decoding="async"
+            fetchPriority="high"
+            onLoad={() => setHeroPortraitReady(true)}
+            className={cn(
+              "h-auto w-[62vw] max-w-[300px] object-contain transition-opacity duration-500 ease-out sm:w-[52vw] md:w-[25vw] md:max-w-none",
+              heroPortraitReady
+                ? "opacity-100 [filter:drop-shadow(0_0_32px_rgba(255,255,255,0.35))_drop-shadow(0_0_64px_rgba(255,255,255,0.18))]"
+                : "opacity-0",
+            )}
+          />
         </motion.div>
 
         <motion.div

@@ -47,18 +47,20 @@ function ChartContainer({
   return (
     <ChartContext.Provider value={{ config }}>
       <div
-        data-chart={chartId}
+        data-chart={isMounted ? chartId : undefined}
         className={cn(
           "[&_.recharts-cartesian-axis-tick_text]:fill-current [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-white/10 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-white/10 [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-none [&_.recharts-sector]:outline-none [&_.recharts-surface]:outline-none",
           className
         )}
         {...props}
       >
-        <ChartStyle id={chartId} config={config} />
         {isMounted ? (
-          <RechartsPrimitive.ResponsiveContainer minWidth={0}>
-            {children}
-          </RechartsPrimitive.ResponsiveContainer>
+          <>
+            <ChartStyle id={chartId} config={config} />
+            <RechartsPrimitive.ResponsiveContainer minWidth={0}>
+              {children}
+            </RechartsPrimitive.ResponsiveContainer>
+          </>
         ) : null}
       </div>
     </ChartContext.Provider>

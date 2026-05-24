@@ -20,7 +20,7 @@ export const AeroButton = React.forwardRef<HTMLButtonElement, AeroButtonProps>(
         )}
         {...props}
       >
-        <span className="rounded-full bg-[var(--echo-orange)] px-6 py-3 text-[#0A0A0A] duration-500 ease-in-out group-hover:bg-white group-hover:text-[#0A0A0A] group-hover:transition-colors">
+        <span className="whitespace-nowrap rounded-full bg-[var(--echo-orange)] px-6 py-3 text-[#0A0A0A] duration-500 ease-in-out group-hover:bg-white group-hover:text-[#0A0A0A] group-hover:transition-colors">
           {children}
         </span>
         <div className="relative flex h-fit cursor-pointer items-center overflow-hidden rounded-full bg-[var(--echo-orange)] p-5 text-[#0A0A0A] duration-500 ease-in-out group-hover:bg-white group-hover:text-[#0A0A0A] group-hover:transition-colors">

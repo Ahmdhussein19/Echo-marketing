@@ -1,4 +1,4 @@
-import { Fredoka, Space_Mono } from "next/font/google"
+import { Barlow, Barlow_Condensed, Fredoka, Space_Mono } from "next/font/google"
 import localFont from "next/font/local"
 
 /** Services — Segoe UI (service list titles) */
@@ -26,6 +26,22 @@ export const segoeUI = localFont({
     },
   ],
   variable: "--font-segoe",
+  display: "swap",
+})
+
+/** Why Us — Barlow Condensed (display headline, stat numbers) */
+export const barlowCondensed = Barlow_Condensed({
+  subsets: ["latin"],
+  weight: ["500", "700", "800", "900"],
+  variable: "--font-barlow-condensed",
+  display: "swap",
+})
+
+/** Why Us — Barlow (labels, support copy, stat captions) */
+export const barlow = Barlow({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-barlow",
   display: "swap",
 })
 
