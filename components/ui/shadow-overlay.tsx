@@ -4,21 +4,16 @@ import {
   useEffect,
   useId,
   useRef,
-  useState,
   type CSSProperties,
   type ReactNode,
-  type RefObject,
 } from "react"
-import { createPortal } from "react-dom"
 import {
   animate,
   useMotionValue,
   type AnimationPlaybackControls,
 } from "framer-motion"
 
-import { useIsWebKitBrowser } from "@/hooks/use-is-webkit-browser"
-
-import "./shadow-overlay.css"
+import { useIsMounted } from "@/hooks/use-is-mounted"
 
 interface ResponsiveImage {
   src: string
@@ -44,6 +39,7 @@ export interface ShadowOverlayProps {
   sizing?: "fill" | "stretch"
   color?: string
   animation?: AnimationConfig
+  isActive?: boolean
   noise?: NoiseConfig
   style?: CSSProperties
   className?: string
@@ -70,159 +66,36 @@ function mapRange(
 
 function useInstanceId(): string {
   const id = useId()
-  return `shadowoverlay-${id.replace(/:/g, "")}`
-}
-
-interface ShadowOverlayFilterProps {
-  animation?: AnimationConfig
-  animationEnabled: boolean
-  displacementScale: number
-  feColorMatrixRef: RefObject<SVGFEColorMatrixElement | null>
-  filterId: string
-  maskId: string
-}
-
-function ShadowOverlayFilterDefs({
-  animation,
-  animationEnabled,
-  displacementScale,
-  feColorMatrixRef,
-  filterId,
-  maskId,
-}: ShadowOverlayFilterProps) {
-  if (typeof document === "undefined") {
-    return null
-  }
-
-  return createPortal(
-    <svg
-      aria-hidden
-      className="pointer-events-none absolute h-0 w-0 overflow-hidden"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <mask
-          id={maskId}
-          maskContentUnits="objectBoundingBox"
-          maskUnits="objectBoundingBox"
-        >
-          <image
-            height="1"
-            href={SHADOW_MASK_URL}
-            preserveAspectRatio="xMidYMid slice"
-            width="1"
-            x="0"
-            y="0"
-          />
-        </mask>
-
-        {animationEnabled && animation ? (
-          <filter
-            colorInterpolationFilters="sRGB"
-            filterUnits="objectBoundingBox"
-            height="200%"
-            id={filterId}
-            width="200%"
-            x="-50%"
-            y="-50%"
-          >
-            <feTurbulence
-              baseFrequency={`${mapRange(animation.scale, 0, 100, 0.001, 0.0005)},${mapRange(animation.scale, 0, 100, 0.004, 0.002)}`}
-              numOctaves="2"
-              result="undulation"
-              seed="0"
-              type="turbulence"
-            />
-            <feColorMatrix
-              in="undulation"
-              ref={feColorMatrixRef}
-              result="undulationHue"
-              type="hueRotate"
-              values="180"
-            />
-            <feColorMatrix
-              in="dist"
-              result="circulation"
-              type="matrix"
-              values="4 0 0 0 1  4 0 0 0 1  4 0 0 0 1  1 0 0 0 0"
-            />
-            <feDisplacementMap
-              in="SourceGraphic"
-              in2="circulation"
-              result="dist"
-              scale={displacementScale}
-            />
-            <feDisplacementMap
-              in="dist"
-              in2="undulationHue"
-              result="output"
-              scale={displacementScale}
-            />
-            <feGaussianBlur in="output" stdDeviation="4" />
-          </filter>
-        ) : null}
-      </defs>
-    </svg>,
-    document.body,
-  )
+  const cleanId = id.replace(/:/g, "")
+  return `shadowoverlay-${cleanId}`
 }
 
 export function ShadowOverlay({
   sizing = "fill",
   color = "rgba(128, 128, 128, 1)",
   animation,
+  isActive = true,
   noise,
   style,
   className,
   children,
 }: ShadowOverlayProps) {
-  const filterId = useInstanceId()
-  const maskId = `${filterId}-mask`
-  const isWebKitBrowser = useIsWebKitBrowser()
-  const rootRef = useRef<HTMLDivElement>(null)
+  const isMounted = useIsMounted()
+  const id = useInstanceId()
+  const animationEnabled =
+    isMounted && isActive && animation !== undefined && animation.scale > 0
   const feColorMatrixRef = useRef<SVGFEColorMatrixElement>(null)
-  const hueRotateAnimation = useRef<AnimationPlaybackControls | null>(null)
   const hueRotateMotionValue = useMotionValue(180)
-  const [isInView, setIsInView] = useState(true)
-  const [isMounted, setIsMounted] = useState(false)
+  const hueRotateAnimation = useRef<AnimationPlaybackControls | null>(null)
 
-  const animationEnabled = animation !== undefined && animation.scale > 0
-  const shouldAnimate = animationEnabled && isInView
-  const displacementScale = animation ? mapRange(animation.scale, 1, 100, 20, 100) : 0
+  const displacementScale =
+    animation && animationEnabled
+      ? mapRange(animation.scale, 1, 100, 20, 100)
+      : 0
   const animationDuration = animation ? mapRange(animation.speed, 1, 100, 1000, 50) : 1
-  const maskSizingClass =
-    sizing === "stretch" ? "shadow-overlay-mask--stretch" : "shadow-overlay-mask--fill"
-  const filterValue = shouldAnimate ? `url(#${filterId})` : "none"
-  const insetValue = shouldAnimate ? -displacementScale : 0
 
   useEffect(() => {
-    setIsMounted(true)
-  }, [])
-
-  useEffect(() => {
-    const rootElement = rootRef.current
-    if (!rootElement) {
-      return
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry) {
-          setIsInView(entry.isIntersecting)
-        }
-      },
-      { threshold: 0.05 },
-    )
-
-    observer.observe(rootElement)
-
-    return () => {
-      observer.disconnect()
-    }
-  }, [])
-
-  useEffect(() => {
-    if (feColorMatrixRef.current && shouldAnimate) {
+    if (feColorMatrixRef.current && animationEnabled) {
       hueRotateAnimation.current?.stop()
       hueRotateMotionValue.set(0)
       hueRotateAnimation.current = animate(hueRotateMotionValue, 360, {
@@ -233,7 +106,9 @@ export function ShadowOverlay({
         ease: "linear",
         delay: 0,
         onUpdate: (value: number) => {
-          feColorMatrixRef.current?.setAttribute("values", String(value))
+          if (feColorMatrixRef.current) {
+            feColorMatrixRef.current.setAttribute("values", String(value))
+          }
         },
       })
 
@@ -244,62 +119,11 @@ export function ShadowOverlay({
 
     hueRotateAnimation.current?.stop()
     return undefined
-  }, [animationDuration, hueRotateMotionValue, shouldAnimate])
-
-  const maskStyle = {
-    backgroundColor: color,
-    WebkitMaskImage: `url('${SHADOW_MASK_URL}')`,
-    maskImage: `url('${SHADOW_MASK_URL}')`,
-  } satisfies CSSProperties
-
-  const renderShadowLayer = () => {
-    if (isMounted && isWebKitBrowser && shouldAnimate) {
-      return (
-        <svg
-          aria-hidden
-          className="shadow-overlay-safari-svg"
-          preserveAspectRatio="xMidYMid slice"
-          style={{
-            inset: insetValue,
-            height: `calc(100% + ${Math.abs(insetValue) * 2}px)`,
-            width: `calc(100% + ${Math.abs(insetValue) * 2}px)`,
-          }}
-          viewBox="0 0 100 100"
-        >
-          <rect
-            fill={color}
-            filter={`url(#${filterId})`}
-            height="100"
-            mask={`url(#${maskId})`}
-            width="100"
-            x="0"
-            y="0"
-          />
-        </svg>
-      )
-    }
-
-    return (
-      <div
-        className="shadow-overlay-filtered"
-        style={{
-          inset: insetValue,
-          WebkitFilter: filterValue,
-          filter: filterValue,
-        }}
-      >
-        <div
-          className={`shadow-overlay-mask ${maskSizingClass}`}
-          style={maskStyle}
-        />
-      </div>
-    )
-  }
+  }, [animationEnabled, animationDuration, hueRotateMotionValue])
 
   return (
     <div
-      ref={rootRef}
-      className={className ? `shadow-overlay-root ${className}` : "shadow-overlay-root"}
+      className={className}
       style={{
         overflow: "hidden",
         position: "relative",
@@ -308,28 +132,95 @@ export function ShadowOverlay({
         ...style,
       }}
     >
-      {isMounted ? (
-        <ShadowOverlayFilterDefs
-          animation={animation}
-          animationEnabled={animationEnabled}
-          displacementScale={displacementScale}
-          feColorMatrixRef={feColorMatrixRef}
-          filterId={filterId}
-          maskId={maskId}
+      <div
+        style={{
+          position: "absolute",
+          top: `${-displacementScale}px`,
+          right: `${-displacementScale}px`,
+          bottom: `${-displacementScale}px`,
+          left: `${-displacementScale}px`,
+          filter: animationEnabled ? `url(#${id}) blur(4px)` : "none",
+        }}
+      >
+        {animationEnabled && animation ? (
+          <svg style={{ position: "absolute" }}>
+            <defs>
+              <filter id={id}>
+                <feTurbulence
+                  result="undulation"
+                  numOctaves="2"
+                  baseFrequency={`${mapRange(animation.scale, 0, 100, 0.001, 0.0005)},${mapRange(animation.scale, 0, 100, 0.004, 0.002)}`}
+                  seed="0"
+                  type="turbulence"
+                />
+                <feColorMatrix
+                  ref={feColorMatrixRef}
+                  in="undulation"
+                  type="hueRotate"
+                  values="180"
+                />
+                <feColorMatrix
+                  in="dist"
+                  result="circulation"
+                  type="matrix"
+                  values="4 0 0 0 1  4 0 0 0 1  4 0 0 0 1  1 0 0 0 0"
+                />
+                <feDisplacementMap
+                  in="SourceGraphic"
+                  in2="circulation"
+                  scale={displacementScale}
+                  result="dist"
+                />
+                <feDisplacementMap
+                  in="dist"
+                  in2="undulation"
+                  scale={displacementScale}
+                  result="output"
+                />
+              </filter>
+            </defs>
+          </svg>
+        ) : null}
+        <div
+          style={{
+            backgroundColor: color,
+            WebkitMaskImage: `url('${SHADOW_MASK_URL}')`,
+            maskImage: `url('${SHADOW_MASK_URL}')`,
+            WebkitMaskSize: sizing === "stretch" ? "100% 100%" : "cover",
+            maskSize: sizing === "stretch" ? "100% 100%" : "cover",
+            WebkitMaskRepeat: "no-repeat",
+            maskRepeat: "no-repeat",
+            WebkitMaskPosition: "center",
+            maskPosition: "center",
+            width: "100%",
+            height: "100%",
+          }}
         />
+      </div>
+
+      {children ? (
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            textAlign: "center",
+            zIndex: 10,
+          }}
+        >
+          {children}
+        </div>
       ) : null}
-
-      {renderShadowLayer()}
-
-      {children ? <div className="shadow-overlay-children">{children}</div> : null}
 
       {noise && noise.opacity > 0 ? (
         <div
-          aria-hidden
-          className="shadow-overlay-noise"
           style={{
+            position: "absolute",
+            inset: 0,
             backgroundImage: `url("${NOISE_TEXTURE_URL}")`,
             backgroundSize: noise.scale * 200,
+            backgroundRepeat: "repeat",
             opacity: noise.opacity / 2,
           }}
         />

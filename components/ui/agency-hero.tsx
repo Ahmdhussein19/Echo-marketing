@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useRef, useState } from "react"
 import {
   LayoutGroup,
   motion,
@@ -16,6 +16,7 @@ import { AeroButton } from "@/components/ui/aero-button"
 import { useEntranceMotion } from "@/hooks/use-entrance-motion"
 import { useIsMounted } from "@/hooks/use-is-mounted"
 import { cn } from "@/lib/utils"
+import Image from "next/image"
 
 
 const ROTATING_WORDS = [
@@ -84,15 +85,7 @@ export function AgencyHero({ className, scrollProgress }: AgencyHeroProps) {
   const statsMotion = useEntranceMotion("hero-stats")
   const scrollHintMotion = useEntranceMotion("hero-scroll-hint")
   const heroEntranceClass = headlineMotion.shouldAnimate ? "hero-entrance" : undefined
-  const heroPortraitRef = useRef<HTMLImageElement>(null)
   const [heroPortraitReady, setHeroPortraitReady] = useState(false)
-
-  useEffect(() => {
-    const portrait = heroPortraitRef.current
-    if (portrait?.complete) {
-      setHeroPortraitReady(true)
-    }
-  }, [])
 
   const { scrollYProgress: internalScrollProgress } = useScroll({
     target: sectionRef,
@@ -264,12 +257,12 @@ export function AgencyHero({ className, scrollProgress }: AgencyHeroProps) {
             heroEntranceClass,
           )}
         >
-          <img
-            ref={heroPortraitRef}
+          <Image
             src={HERO_PORTRAIT_SRC}
             alt=""
-            decoding="async"
-            fetchPriority="high"
+            width={347}
+            height={661}
+            priority
             onLoad={() => setHeroPortraitReady(true)}
             className={cn(
               "h-auto w-[62vw] max-w-[300px] object-contain transition-opacity duration-500 ease-out sm:w-[52vw] md:w-[25vw] md:max-w-none",

@@ -1,0 +1,113 @@
+.echo-hover-footer {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  padding: clamp(32px, 5vw, 80px);
+}
+
+.echo-hover-footer-inner {
+  position: relative;
+  z-index: 40;
+}
+
+.echo-hover-footer-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-xl);
+}
+
+@media (min-width: 768px) {
+  .echo-hover-footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-lg);
+  }
+}
+
+@media (min-width: 1024px) {
+  .echo-hover-footer-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-xl);
+  }
+}
+
+.echo-hover-footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-base);
+}
+
+.echo-hover-footer-column-title {
+  padding-block: 0;
+  margin: 0;
+}
+
+.echo-hover-footer-link-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  padding: 0;
+  list-style: none;
+}
+
+.echo-hover-footer-contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-base);
+  margin-top: var(--space-md);
+  padding: 0;
+  list-style: none;
+}
+
+.echo-hover-footer-divider {
+  margin-block: var(--space-lg);
+  border: 0;
+  border-top: 1px solid var(--echo-border);
+}
+
+.echo-hover-footer-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-base);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 768px) {
+  .echo-hover-footer-bottom {
+    flex-direction: row;
+    gap: 0;
+  }
+}
+
+.echo-hover-footer-social {
+  display: flex;
+  gap: var(--space-lg);
+  color: var(--echo-text-3);
+}
+
+.echo-hover-footer-wordmark {
+  display: none;
+  height: 24rem;
+  margin-top: clamp(32px, 5vw, 80px);
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 1024px) {
+  .echo-hover-footer-wordmark {
+    display: flex;
+  }
+}
+
+@media (max-width: 767px) {
+  .echo-hover-footer {
+    padding: 16px;
+  }
+
+  .echo-hover-footer-wordmark {
+    height: 20rem;
+    margin-top: 16px;
+  }
+}

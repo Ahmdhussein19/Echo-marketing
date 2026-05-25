@@ -2,7 +2,7 @@ import "./globals.css"
 import "./kinetic-nav.css"
 import Script from "next/script"
 import { ScrollToTopOnLoad } from "@/components/shared/scroll-to-top"
-import { barlow, barlowCondensed, fredoka, manrope, segoeUI, spaceMono } from "@/lib/fonts"
+import { fredoka, manrope, segoeUI, spaceMono } from "@/lib/fonts"
 import { cn } from "@/lib/utils"
 
 export default function RootLayout({
@@ -16,8 +16,6 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn(
         "dark antialiased",
-        barlow.variable,
-        barlowCondensed.variable,
         fredoka.variable,
         manrope.variable,
         segoeUI.variable,

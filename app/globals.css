@@ -173,4 +173,21 @@
       opacity: 0;
     }
   }
+
+  .about-glow-paragraph {
+    --scroll-progress: 0;
+  }
+
+  .about-glow-char {
+    --char-start: 0;
+    --char-end: 1;
+    --char-t: clamp(
+      0,
+      (var(--scroll-progress) - var(--char-start)) /
+        max(0.0001, calc(var(--char-end) - var(--char-start))),
+      1
+    );
+    color: color-mix(in srgb, #d6d6d6 calc(var(--char-t) * 100%), #3b3b3b);
+    text-shadow: 0 0 calc(var(--char-t) * 18px) rgba(255, 255, 255, calc(var(--char-t) * 0.48));
+  }
 }

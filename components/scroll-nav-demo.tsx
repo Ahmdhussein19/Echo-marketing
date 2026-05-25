@@ -1,6 +1,7 @@
 "use client"
 
-import { useRef } from "react"
+import dynamic from "next/dynamic"
+import { useRef, type CSSProperties, type RefObject } from "react"
 import {
   motion,
   useReducedMotion,
@@ -15,13 +16,58 @@ import {
   type ServiceMediaItem,
 } from "@/components/ui/service-media-bento"
 import { ScrollNavigationMenu } from "@/components/ui/scroll-navigation-menu"
-import { WhyUsSection } from "@/components/ui/why-us-section"
 import { useIsMounted } from "@/hooks/use-is-mounted"
 import { useInView } from "@/hooks/use-in-view"
 import {
   serviceEntranceContainerVariants,
   serviceEntranceItemVariants,
 } from "@/lib/service-entrance-motion"
+
+const WhyUsSection = dynamic(
+  () =>
+    import("@/components/ui/why-us-section").then((module) => module.WhyUsSection),
+  {
+    loading: () => (
+      <div aria-hidden className="min-h-[520px] bg-[#111111]" />
+    ),
+  },
+)
+
+const HowWeWorkSection = dynamic(
+  () =>
+    import("@/components/ui/how-we-work-section").then(
+      (module) => module.HowWeWorkSection,
+    ),
+  {
+    loading: () => (
+      <div aria-hidden className="min-h-[380vh] bg-[var(--echo-bg)]" />
+    ),
+  },
+)
+
+const EchoHoverFooter = dynamic(
+  () =>
+    import("@/components/ui/echo-hover-footer").then(
+      (module) => module.EchoHoverFooter,
+    ),
+  {
+    loading: () => (
+      <div aria-hidden className="min-h-[720px] bg-[var(--echo-bg)]" />
+    ),
+  },
+)
+
+const EchoContactSection = dynamic(
+  () =>
+    import("@/components/ui/echo-contact-section").then(
+      (module) => module.EchoContactSection,
+    ),
+  {
+    loading: () => (
+      <div aria-hidden className="min-h-screen bg-[var(--echo-bg)]" id="contact" />
+    ),
+  },
+)
 
 const ABOUT_COPY =
   "Blending years of web design and branding expertise to craft meaningful, story-driven digital experiences."
@@ -96,7 +142,7 @@ const SERVICES: ServiceItem[] = [
       "Most content fills a calendar. Ours fills a room with people who want more. Platform-native. Audience-obsessive. Never generic.",
     images: [
       {
-        src: "/images/content creation/Still_Human_Futuristic_minimalist_male_editorial_campaign_exp_9b380a21-8576-43c0-ac80-e04f0f1c0c54_0.png",
+        src: "/images/content creation/Still_Human_Futuristic_minimalist_male_editorial_campaign_exp_9b380a21-8576-43c0-ac80-e04f0f1c0c54_0.jpg",
         width: 1648,
         height: 2944,
         alt: "Futuristic minimalist male editorial campaign portrait",
@@ -104,7 +150,7 @@ const SERVICES: ServiceItem[] = [
         rowSpan: 2,
       },
       {
-        src: "/images/content creation/u8969295761_Blue_background._Surreal_hyper_realistic_cinemati_0f1b29b0-beca-4c97-aa73-d5332021340f_3.png",
+        src: "/images/content creation/u8969295761_Blue_background._Surreal_hyper_realistic_cinemati_0f1b29b0-beca-4c97-aa73-d5332021340f_3.jpg",
         width: 816,
         height: 1456,
         alt: "Surreal cinematic editorial of a woman reading a burning newspaper as a plane crashes behind her",
@@ -243,28 +289,6 @@ const SERVICES: ServiceItem[] = [
 const SERVICE_DESCRIPTION_FADE_IN_END = 0.45
 const SERVICE_DESCRIPTION_FADE_OUT_START = 0.5
 
-interface AboutGlowCharProps {
-  char: string
-  end: number
-  progress: MotionValue<number>
-  start: number
-}
-
-function AboutGlowChar({ char, end, progress, start }: AboutGlowCharProps) {
-  const color = useTransform(progress, [start, end], ["#3b3b3b", "#d6d6d6"])
-  const textShadow = useTransform(
-    progress,
-    [start, end],
-    ["0 0 0 rgba(255,255,255,0)", "0 0 18px rgba(255,255,255,0.48)"]
-  )
-
-  return (
-    <motion.span style={{ color, textShadow }} className="inline-block">
-      {char}
-    </motion.span>
-  )
-}
-
 interface GlowParagraphProps {
   progress?: MotionValue<number>
 }
@@ -274,14 +298,17 @@ function GlowParagraph({ progress }: GlowParagraphProps) {
 
   if (!progress || !isMounted) {
     return (
-      <p className="font-sans text-3xl leading-tight font-black text-[var(--echo-text-1)] md:text-5xl">
+      <p className="font-sans text-3xl leading-none font-black text-[var(--echo-text-1)] md:text-5xl">
         {ABOUT_COPY}
       </p>
     )
   }
 
   return (
-    <p className="font-sans text-3xl leading-tight font-black md:text-5xl">
+    <motion.p
+      className="about-glow-paragraph font-sans text-3xl leading-none font-black md:text-5xl"
+      style={{ "--scroll-progress": progress } as CSSProperties}
+    >
       {ABOUT_WORDS.map((word, wordIndex) => (
         <span
           key={`word-${wordIndex}`}
@@ -292,18 +319,23 @@ function GlowParagraph({ progress }: GlowParagraphProps) {
             const end = Math.min(start + 0.12, 1)
 
             return (
-              <AboutGlowChar
+              <span
                 key={`${char}-${index}`}
-                char={char}
-                end={end}
-                progress={progress}
-                start={start}
-              />
+                className="about-glow-char inline-block"
+                style={
+                  {
+                    "--char-start": start,
+                    "--char-end": end,
+                  } as CSSProperties
+                }
+              >
+                {char}
+              </span>
             )
           })}
         </span>
       ))}
-    </p>
+    </motion.p>
   )
 }
 
@@ -346,6 +378,8 @@ const SERVICE_TITLE_STATIC_STYLE = {
 
 interface ServiceDescriptionProps {
   description: string
+  descriptionLeaveProgress: MotionValue<number>
+  descriptionRef: RefObject<HTMLParagraphElement | null>
   fadeInProgress: MotionValue<number>
   titleColorProgress: MotionValue<string>
   titleShadowProgress: MotionValue<string>
@@ -354,17 +388,13 @@ interface ServiceDescriptionProps {
 
 function ServiceDescription({
   description,
+  descriptionLeaveProgress,
+  descriptionRef,
   fadeInProgress,
   titleColorProgress,
   titleShadowProgress,
   useScrollStyles,
 }: ServiceDescriptionProps) {
-  const descriptionRef = useRef<HTMLParagraphElement>(null)
-  const { scrollYProgress: descriptionLeaveProgress } = useScroll({
-    target: descriptionRef,
-    offset: ["start 0.92", "start 0.35"],
-  })
-
   const descriptionFadeInOpacity = useTransform(fadeInProgress, (progress) => {
     if (progress <= SERVICE_DESCRIPTION_FADE_IN_END) {
       const fadeInAmount = progress / SERVICE_DESCRIPTION_FADE_IN_END
@@ -411,11 +441,16 @@ function TrackProgressItem({
   title,
 }: TrackProgressItemProps) {
   const ref = useRef<HTMLDivElement>(null)
+  const descriptionRef = useRef<HTMLParagraphElement>(null)
   const isMounted = useIsMounted()
   const prefersReducedMotion = useReducedMotion()
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["end end", "start start"],
+  })
+  const { scrollYProgress: descriptionLeaveProgress } = useScroll({
+    target: descriptionRef,
+    offset: ["start 0.92", "start 0.35"],
   })
   const titleColorProgress = useTransform(
     scrollYProgress,
@@ -473,6 +508,8 @@ function TrackProgressItem({
     description ? (
       <ServiceDescription
         description={description}
+        descriptionLeaveProgress={descriptionLeaveProgress}
+        descriptionRef={descriptionRef}
         fadeInProgress={scrollYProgress}
         titleColorProgress={titleColorProgress}
         titleShadowProgress={titleShadowProgress}
@@ -490,7 +527,15 @@ function TrackProgressItem({
           {prefersReducedMotion ? (
             <>
               {titleBlock}
-              {descriptionBlock}
+              {description ? (
+                <p
+                  ref={descriptionRef}
+                  className="max-w-lg py-0 font-sans text-lg leading-tight md:max-w-xl md:text-xl md:leading-tight lg:text-2xl lg:leading-tight"
+                  style={SERVICE_TITLE_STATIC_STYLE}
+                >
+                  {description}
+                </p>
+              ) : null}
             </>
           ) : (
             <motion.div
@@ -588,6 +633,9 @@ export function ScrollNavDemo() {
         <AboutSection />
         <TrackElementWithinViewport />
         <WhyUsSection />
+        <HowWeWorkSection />
+        <EchoContactSection />
+        <EchoHoverFooter />
       </ScrollNavigationMenu>
     )
   }
@@ -612,6 +660,9 @@ export function ScrollNavDemo() {
 
       <TrackElementWithinViewport />
       <WhyUsSection />
+      <HowWeWorkSection />
+      <EchoContactSection />
+      <EchoHoverFooter />
     </ScrollNavigationMenu>
   )
 }

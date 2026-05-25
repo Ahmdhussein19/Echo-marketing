@@ -1,24 +1,29 @@
 "use client"
 
 import * as React from "react"
+import dynamic from "next/dynamic"
 import { useEffect, useState } from "react"
 import {
   motion,
   useScroll,
   useMotionValueEvent,
   useReducedMotion,
-  type Variants,
 } from "framer-motion"
 import { Menu, Home, User, Settings, Mail, Info } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
-import {
-  SterlingGateKineticMenuOverlay,
-  type KineticNavMenuItem,
-} from "@/components/ui/sterling-gate-kinetic-navigation"
 import { useIsMounted } from "@/hooks/use-is-mounted"
 import { cn } from "@/lib/utils"
+import type { KineticNavMenuItem } from "@/components/ui/sterling-gate-kinetic-navigation"
+
+const SterlingGateKineticMenuOverlay = dynamic(
+  () =>
+    import("@/components/ui/sterling-gate-kinetic-navigation").then(
+      (module) => module.SterlingGateKineticMenuOverlay,
+    ),
+  { ssr: false },
+)
 
 export interface ScrollNavMenuItem {
   id: number
@@ -67,11 +72,6 @@ const defaultMenuItems: ScrollNavMenuItem[] = [
   },
 ]
 
-const hamburgerVariants: Variants = {
-  normal: { rotate: 0, scale: 1 },
-  scrolled: { rotate: 360, scale: 1.1 },
-}
-
 const shapeByIndex = ["1", "2", "3", "4", "5"] as const
 
 function toKineticMenuItems(items: ScrollNavMenuItem[]): KineticNavMenuItem[] {
@@ -92,6 +92,7 @@ export function ScrollNavigationMenu({
 }: ScrollNavigationMenuProps) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [menuOverlayMounted, setMenuOverlayMounted] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<number | null>(null)
 
   const isMounted = useIsMounted()
@@ -142,8 +143,20 @@ export function ScrollNavigationMenu({
     [scrollToHash],
   )
 
-  const toggleMenu = () => setIsMenuOpen((open) => !open)
+  useEffect(() => {
+    if (isMenuOpen) {
+      setMenuOverlayMounted(true)
+    }
+  }, [isMenuOpen])
+
+  const toggleMenu = () => {
+    setMenuOverlayMounted(true)
+    setIsMenuOpen((open) => !open)
+  }
   const closeMenu = () => setIsMenuOpen(false)
+  const scrollToContact = React.useCallback(() => {
+    scrollToHash("#contact")
+  }, [scrollToHash])
   const kineticMenuItems = toKineticMenuItems(menuItems)
   const showFloatingMenu = isMounted && isScrolled
 
@@ -251,33 +264,44 @@ export function ScrollNavigationMenu({
         }
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className={cn(
-          "fixed top-6 right-6 z-50 origin-center",
+          "fixed top-6 right-4 z-50 origin-center md:right-6 lg:right-8",
           !showFloatingMenu && "pointer-events-none scale-0 opacity-0",
         )}
         aria-hidden={!showFloatingMenu}
       >
-        <motion.button
-          type="button"
-          onClick={toggleMenu}
-          tabIndex={showFloatingMenu ? 0 : -1}
-          className="flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"
-          variants={hamburgerVariants}
-          animate={isScrolled ? "scrolled" : "normal"}
-          whileHover={{ scale: 1.1, rotate: 180 }}
-          whileTap={{ scale: 0.9 }}
-          aria-expanded={isMenuOpen}
-          aria-label="Open menu"
-        >
-          <Menu className="size-6" />
-        </motion.button>
+        <div className="group mx-0 flex items-center gap-0">
+          <button
+            type="button"
+            onClick={scrollToContact}
+            tabIndex={showFloatingMenu ? 0 : -1}
+            className="flex h-12 items-center whitespace-nowrap rounded-full bg-[var(--echo-orange)] px-6 text-[#0A0A0A] duration-500 ease-in-out group-hover:bg-white group-hover:text-[#0A0A0A] group-hover:transition-colors"
+            aria-label="Scroll to contact section"
+          >
+            Let&apos;s Talk
+          </button>
+          <motion.button
+            type="button"
+            onClick={toggleMenu}
+            tabIndex={showFloatingMenu ? 0 : -1}
+            className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[var(--echo-orange)] text-[#0A0A0A] duration-500 ease-in-out group-hover:bg-white group-hover:text-[#0A0A0A] group-hover:transition-colors"
+            whileHover={{ scale: 1.1, rotate: 180 }}
+            whileTap={{ scale: 0.9 }}
+            aria-expanded={isMenuOpen}
+            aria-label="Open navigation menu"
+          >
+            <Menu className="size-5" />
+          </motion.button>
+        </div>
       </motion.div>
 
-      <SterlingGateKineticMenuOverlay
-        menuItems={kineticMenuItems}
-        isOpen={isMenuOpen}
-        onClose={closeMenu}
-        onNavigateLink={handleNavLinkClick}
-      />
+      {menuOverlayMounted ? (
+        <SterlingGateKineticMenuOverlay
+          menuItems={kineticMenuItems}
+          isOpen={isMenuOpen}
+          onClose={closeMenu}
+          onNavigateLink={handleNavLinkClick}
+        />
+      ) : null}
 
       <motion.div>{children}</motion.div>
     </>
