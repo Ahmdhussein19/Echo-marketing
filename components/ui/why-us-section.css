@@ -6,6 +6,7 @@
   overflow: hidden;
   min-height: 520px;
   isolation: isolate;
+  contain: layout style;
 }
 
 .why-us-section-background {

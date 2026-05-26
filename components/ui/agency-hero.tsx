@@ -1,10 +1,10 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useState } from "react"
 import {
   LayoutGroup,
   motion,
-  useScroll,
+  useMotionValue,
   useTransform,
   useReducedMotion,
   type MotionValue,
@@ -13,6 +13,7 @@ import {
 
 import { TextRotate } from "@/components/ui/text-rotate"
 import { AeroButton } from "@/components/ui/aero-button"
+import { Marquee } from "@/components/ui/marquee"
 import { useEntranceMotion } from "@/hooks/use-entrance-motion"
 import { useIsMounted } from "@/hooks/use-is-mounted"
 import { cn } from "@/lib/utils"
@@ -24,6 +25,19 @@ const ROTATING_WORDS = [
   "forgettable",
   "stoppable",
   "mistakable",
+]
+
+const MARQUEE_ITEMS = [
+  "Brand Identity",
+  "Content Creation",
+  "SEO Growth",
+  "Website Development",
+  "Mobile Applications",
+  "Media Buying",
+  "Media Production",
+  "Reel Creation",
+  "Performance Campaigns",
+  "Digital Strategy",
 ]
 
 const slideUpVariants: Variants = {
@@ -75,7 +89,6 @@ export interface AgencyHeroProps {
 }
 
 export function AgencyHero({ className, scrollProgress }: AgencyHeroProps) {
-  const sectionRef = useRef<HTMLElement>(null)
   const isMounted = useIsMounted()
   const prefersReducedMotion = useReducedMotion()
   const headlineMotion = useEntranceMotion("hero-headline")
@@ -86,12 +99,6 @@ export function AgencyHero({ className, scrollProgress }: AgencyHeroProps) {
   const scrollHintMotion = useEntranceMotion("hero-scroll-hint")
   const heroEntranceClass = headlineMotion.shouldAnimate ? "hero-entrance" : undefined
   const [heroPortraitReady, setHeroPortraitReady] = useState(false)
-
-  const { scrollYProgress: internalScrollProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end start"],
-  })
-  const heroScrollProgress = scrollProgress ?? internalScrollProgress
 
   const scrollToContactSection = () => {
     if (typeof window === "undefined") return
@@ -112,62 +119,26 @@ export function AgencyHero({ className, scrollProgress }: AgencyHeroProps) {
     }
   }
 
-  const backdropScale = useTransform(
-    heroScrollProgress,
-    [0, 0.5],
-    prefersReducedMotion ? [1, 1] : [1, 1.03]
-  )
-  const heroScale = useTransform(
-    heroScrollProgress,
-    [0, 1],
-    prefersReducedMotion ? [1, 1] : [1, 0.84]
-  )
-  const heroRotateX = useTransform(
-    heroScrollProgress,
-    [0, 1],
-    prefersReducedMotion ? [0, 0] : [0, 2]
-  )
-  const heroContentFilter = useTransform(
-    heroScrollProgress,
-    [0, 0.55, 1],
-    prefersReducedMotion
-      ? ["blur(0px)", "blur(0px)", "blur(0px)"]
-      : ["blur(0px)", "blur(6px)", "blur(14px)"]
-  )
-  const heroContentOpacity = useTransform(
-    heroScrollProgress,
-    [0, 0.8, 1],
-    prefersReducedMotion ? [1, 1, 1] : [1, 0.72, 0.48]
-  )
-  const heroPerspective = prefersReducedMotion ? undefined : "1400px"
+  const fallbackProgress = useMotionValue(0)
+  const activeScrollProgress = scrollProgress ?? fallbackProgress
+  const heroScale = useTransform(activeScrollProgress, [0, 1], [1, 0.84])
+  const heroContentOpacity = useTransform(activeScrollProgress, [0, 0.8, 1], [1, 0.72, 0.48])
 
   return (
     <section
-      ref={sectionRef}
       id="top"
       className={cn("relative h-screen overflow-hidden", className)}
     >
       <motion.div
         style={{
           backgroundColor: "var(--echo-bg)",
-          perspective: isMounted ? heroPerspective : undefined,
-          scale: isMounted ? heroScale : undefined,
-          rotateX: isMounted ? heroRotateX : undefined,
-          filter: isMounted ? heroContentFilter : undefined,
-          opacity: isMounted ? heroContentOpacity : undefined,
+          scale: isMounted && !prefersReducedMotion && scrollProgress ? heroScale : undefined,
+          opacity: isMounted && !prefersReducedMotion && scrollProgress ? heroContentOpacity : undefined,
           transformOrigin: "center top",
-          transformStyle:
-            isMounted && !prefersReducedMotion ? "preserve-3d" : undefined,
+          willChange: isMounted && !prefersReducedMotion && scrollProgress ? "transform, opacity" : undefined,
         }}
         className="absolute inset-0 flex h-screen w-full flex-col items-start justify-between overflow-hidden border-0"
       >
-        <motion.div
-          style={{
-            scale: isMounted ? backdropScale : undefined,
-            willChange: isMounted && !prefersReducedMotion ? "transform" : undefined,
-          }}
-          className="pointer-events-none absolute inset-0 bg-[var(--echo-bg)]"
-        />
 
         <motion.div
           variants={slideDownVariants}
@@ -271,6 +242,104 @@ export function AgencyHero({ className, scrollProgress }: AgencyHeroProps) {
                 : "opacity-0",
             )}
           />
+        </motion.div>
+
+        <motion.div
+          variants={slideUpVariants}
+          initial={taglineMotion.initial}
+          animate={taglineMotion.animate}
+          custom={0.18}
+          className={cn(
+            "absolute left-4 right-[10%] top-[72%] z-[0] -translate-y-1/2 md:right-[62%] md:z-10 md:left-6 lg:left-8",
+            heroEntranceClass,
+          )}
+        >
+          <div
+            className="relative overflow-hidden"
+            style={{
+              borderRadius: "var(--radius-md)",
+              display: "grid",
+              gap: "0",
+            }}
+          >
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16"
+              style={{
+                background: "linear-gradient(to right, var(--echo-bg), transparent)",
+              }}
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16"
+              style={{
+                background: "linear-gradient(to left, var(--echo-bg), transparent)",
+              }}
+            />
+            <div style={{ background: "var(--echo-bg)" }}>
+              <Marquee pauseOnHover repeat={4} className="py-1.5 [--duration:45s] [--gap:0.5rem]">
+                {MARQUEE_ITEMS.slice(0, 4).map((item) => (
+                  <span
+                    key={item}
+                    className="shrink-0 flex items-center border-[0.5px] border-[var(--echo-border)] px-3 py-1"
+                    style={{
+                      borderRadius: "var(--radius-sm)",
+                      backgroundImage: "linear-gradient(135deg, #1a1a1a 0%, #2e2e2e 50%, #111 100%)",
+                    }}
+                  >
+                    <span
+                      className="font-sans text-[10px] uppercase tracking-[0.13em] leading-none"
+                      style={{ color: "var(--echo-text-3)" }}
+                    >
+                      {item}
+                    </span>
+                  </span>
+                ))}
+              </Marquee>
+            </div>
+            <div style={{ background: "var(--echo-bg)" }}>
+              <Marquee pauseOnHover repeat={4} reverse className="py-1.5 [--duration:50s] [--gap:0.5rem]">
+                {MARQUEE_ITEMS.slice(3, 7).map((item) => (
+                  <span
+                    key={item}
+                    className="shrink-0 flex items-center border-[0.5px] border-[var(--echo-border)] px-3 py-1"
+                    style={{
+                      borderRadius: "var(--radius-sm)",
+                      backgroundImage: "linear-gradient(135deg, #1a1a1a 0%, #2e2e2e 50%, #111 100%)",
+                    }}
+                  >
+                    <span
+                      className="font-sans text-[10px] uppercase tracking-[0.13em] leading-none"
+                      style={{ color: "var(--echo-text-3)" }}
+                    >
+                      {item}
+                    </span>
+                  </span>
+                ))}
+              </Marquee>
+            </div>
+            <div style={{ background: "var(--echo-bg)" }}>
+              <Marquee pauseOnHover repeat={4} className="py-1.5 [--duration:42s] [--gap:0.5rem]">
+                {MARQUEE_ITEMS.slice(6).map((item) => (
+                  <span
+                    key={item}
+                    className="shrink-0 flex items-center border-[0.5px] border-[var(--echo-border)] px-3 py-1"
+                    style={{
+                      borderRadius: "var(--radius-sm)",
+                      backgroundImage: "linear-gradient(135deg, #1a1a1a 0%, #2e2e2e 50%, #111 100%)",
+                    }}
+                  >
+                    <span
+                      className="font-sans text-[10px] uppercase tracking-[0.13em] leading-none"
+                      style={{ color: "var(--echo-text-3)" }}
+                    >
+                      {item}
+                    </span>
+                  </span>
+                ))}
+              </Marquee>
+            </div>
+          </div>
         </motion.div>
 
         <motion.div

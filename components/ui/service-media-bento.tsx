@@ -339,7 +339,7 @@ function ServiceMediaCell({
           alt={image.alt}
           className={objectFitClass}
           fill
-          quality={image.quality ?? 90}
+          quality={image.quality ?? 80}
           sizes={imageSizes}
           src={image.src}
           unoptimized={useUnoptimized}

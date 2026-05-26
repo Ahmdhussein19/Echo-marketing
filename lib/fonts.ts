@@ -26,7 +26,7 @@ export const segoeUI = localFont({
     },
   ],
   variable: "--font-segoe",
-  display: "swap",
+  display: "optional",
 })
 
 /** Display — Fredoka (headlines, metric values, logo) */
@@ -65,5 +65,5 @@ export const manrope = localFont({
     },
   ],
   variable: "--font-sans",
-  display: "swap",
+  display: "optional",
 })

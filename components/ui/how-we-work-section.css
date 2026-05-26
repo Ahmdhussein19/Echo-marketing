@@ -2,6 +2,7 @@
   position: relative;
   height: 380vh;
   background: var(--echo-bg);
+  contain: layout style;
 }
 
 .how-we-work-section--static {

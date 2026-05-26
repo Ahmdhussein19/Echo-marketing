@@ -6,6 +6,7 @@ import {
   motion,
   useReducedMotion,
   useScroll,
+  useSpring,
   useTransform,
   type MotionValue,
 } from "framer-motion"
@@ -424,13 +425,21 @@ function ServiceDescription({
     : SERVICE_TITLE_STATIC_STYLE
 
   return (
-    <motion.p
-      ref={descriptionRef}
-      style={descriptionStyle}
-      className="max-w-lg py-0 font-sans text-lg leading-tight md:max-w-xl md:text-xl md:leading-tight lg:text-2xl lg:leading-tight"
-    >
-      {description}
-    </motion.p>
+    <>
+      <motion.p
+        ref={descriptionRef}
+        style={descriptionStyle}
+        className="hidden md:block max-w-lg py-0 font-sans text-lg leading-tight md:max-w-xl md:text-xl md:leading-tight lg:text-2xl lg:leading-tight"
+      >
+        {description}
+      </motion.p>
+      <p
+        className="md:hidden max-w-lg py-0 font-sans text-lg leading-tight"
+        style={{ color: "var(--echo-text-2)" }}
+      >
+        {description}
+      </p>
+    </>
   )
 }
 
@@ -467,8 +476,8 @@ function TrackProgressItem({
     [0, 0.45, 1],
     [
       "0 0 0 rgba(217,95,43,0)",
-      "0 0 20px rgba(217,95,43,0.1)",
-      "0 0 28px rgba(217,95,43,0.24)",
+      "0 0 12px rgba(217,95,43,0.08)",
+      "0 0 16px rgba(217,95,43,0.18)",
     ]
   )
   const useScrollStyles = isMounted && !prefersReducedMotion
@@ -518,7 +527,7 @@ function TrackProgressItem({
     ) : null
 
   return (
-    <section className="flex h-screen max-h-[720px] items-center justify-center px-4 max-md:h-auto max-md:min-h-0 max-md:py-10 md:px-6 lg:px-8">
+    <section className="flex h-screen max-h-[720px] items-center justify-center px-4 max-md:h-auto max-md:min-h-0 max-md:py-10 md:px-6 lg:px-8 [contain:layout_style]">
       <div
         ref={ref}
         className="mx-auto grid w-full max-w-7xl grid-cols-1 items-start gap-8 max-md:gap-10 md:grid-cols-[2fr_2.75fr]"
@@ -531,7 +540,7 @@ function TrackProgressItem({
                 <p
                   ref={descriptionRef}
                   className="max-w-lg py-0 font-sans text-lg leading-tight md:max-w-xl md:text-xl md:leading-tight lg:text-2xl lg:leading-tight"
-                  style={SERVICE_TITLE_STATIC_STYLE}
+                  style={{ color: "var(--echo-text-2)" }}
                 >
                   {description}
                 </p>
@@ -583,7 +592,7 @@ function TrackProgressItem({
 
 function TrackElementWithinViewport() {
   return (
-    <section id="progress-track" className="bg-[var(--echo-bg)] py-20 max-md:pb-28 md:py-28">
+    <section id="services" className="bg-[var(--echo-bg)] py-20 max-md:pb-28 md:py-28">
       <div className="mx-auto max-w-5xl px-4 text-center md:px-6 lg:px-8">
         <h2 className="font-heading text-5xl leading-[0.9] font-bold text-[var(--echo-title-1)] uppercase md:text-7xl lg:text-8xl">
           WHAT WE DO
@@ -621,8 +630,15 @@ export function ScrollNavDemo() {
     target: transitionRef,
     offset: ["start start", "end end"],
   })
-  const aboutY = useTransform(scrollYProgress, [0, 0.45], ["100vh", "0vh"])
-  const aboutTextProgress = useTransform(scrollYProgress, [0.45, 1], [0, 1])
+  const smoothScrollYProgress = useSpring(scrollYProgress, {
+    stiffness: 55,
+    damping: 20,
+    mass: 1,
+  })
+  const activeProgress =
+    isMounted && !prefersReducedMotion ? smoothScrollYProgress : scrollYProgress
+  const aboutY = useTransform(activeProgress, [0, 0.45], ["100vh", "0vh"])
+  const aboutTextProgress = useTransform(activeProgress, [0.45, 0.8], [0, 1])
   const useReducedLayout = isMounted && prefersReducedMotion === true
 
   if (useReducedLayout) {
@@ -645,10 +661,10 @@ export function ScrollNavDemo() {
       <TopScrollVanish />
       <section
         ref={transitionRef}
-        className="relative h-[300vh] bg-[var(--echo-bg)]"
+        className="relative h-[400vh] bg-[var(--echo-bg)] [contain:layout_style]"
       >
         <div className="sticky top-0 h-screen overflow-hidden">
-          <AgencyHero scrollProgress={scrollYProgress} />
+          <AgencyHero scrollProgress={activeProgress} />
           <motion.div
             style={{ y: aboutY, willChange: "transform" }}
             className="absolute inset-0 z-20"

@@ -60,15 +60,15 @@ const defaultMenuItems: ScrollNavMenuItem[] = [
   },
   {
     id: 4,
-    title: "Contact",
-    url: "#contact",
-    icon: <Mail className="size-5" />,
+    title: "Process",
+    url: "#how-we-work",
+    icon: <Info className="size-5" />,
   },
   {
     id: 5,
-    title: "Info",
-    url: "#info",
-    icon: <Info className="size-5" />,
+    title: "Contact",
+    url: "#contact",
+    icon: <Mail className="size-5" />,
   },
 ]
 
@@ -111,6 +111,23 @@ export function ScrollNavigationMenu({
   const scrollToHash = React.useCallback(
     (hash: string) => {
       if (typeof window === "undefined" || !hash.startsWith("#")) return false
+
+      if (hash === "#top") {
+        window.scrollTo({
+          top: 0,
+          behavior: prefersReducedMotion ? "auto" : "smooth",
+        })
+        return true
+      }
+
+      if (hash === "#about") {
+        const vh = window.innerHeight
+        window.scrollTo({
+          top: vh * 4 * 0.5,
+          behavior: prefersReducedMotion ? "auto" : "smooth",
+        })
+        return true
+      }
 
       const target = document.querySelector(hash) as HTMLElement | null
       if (!target) return false

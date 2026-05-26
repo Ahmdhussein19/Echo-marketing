@@ -98,6 +98,7 @@ export function ShadowOverlay({
     if (feColorMatrixRef.current && animationEnabled) {
       hueRotateAnimation.current?.stop()
       hueRotateMotionValue.set(0)
+      let lastUpdate = 0
       hueRotateAnimation.current = animate(hueRotateMotionValue, 360, {
         duration: animationDuration / 25,
         repeat: Infinity,
@@ -106,6 +107,9 @@ export function ShadowOverlay({
         ease: "linear",
         delay: 0,
         onUpdate: (value: number) => {
+          const now = performance.now()
+          if (now - lastUpdate < 33) return
+          lastUpdate = now
           if (feColorMatrixRef.current) {
             feColorMatrixRef.current.setAttribute("values", String(value))
           }
@@ -124,11 +128,14 @@ export function ShadowOverlay({
   return (
     <div
       className={className}
+      suppressHydrationWarning
       style={{
         overflow: "hidden",
         position: "relative",
         width: "100%",
         height: "100%",
+        transform: "translateZ(0)",
+        willChange: animationEnabled ? "transform" : undefined,
         ...style,
       }}
     >
@@ -140,10 +147,13 @@ export function ShadowOverlay({
           bottom: `${-displacementScale}px`,
           left: `${-displacementScale}px`,
           filter: animationEnabled ? `url(#${id}) blur(4px)` : "none",
+          transform: "translateZ(0)",
+          willChange: animationEnabled ? "filter" : undefined,
         }}
+        suppressHydrationWarning
       >
         {animationEnabled && animation ? (
-          <svg style={{ position: "absolute" }}>
+          <svg style={{ position: "absolute", width: 0, height: 0, overflow: "visible" }}>
             <defs>
               <filter id={id}>
                 <feTurbulence
