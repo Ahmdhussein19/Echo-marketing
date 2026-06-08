@@ -2,13 +2,9 @@
 
 import { useRef } from "react"
 import {
-  Globe,
-  Link2,
   Mail,
   MapPin,
-  MessageCircle,
   Phone,
-  Share2,
 } from "lucide-react"
 import Image from "next/image"
 
@@ -57,13 +53,13 @@ const CONTACT_INFO: readonly {
 }[] = [
   {
     icon: Mail,
-    text: "hello@echo.agency",
-    href: "mailto:hello@echo.agency",
+    text: "contact@echo.etriplesoft.com",
+    href: "mailto:contact@echo.etriplesoft.com",
   },
   {
     icon: Phone,
-    text: "+20 100 000 0000",
-    href: "tel:+201000000000",
+    text: "+20 103 733 9471",
+    href: "tel:+201037339471",
   },
   {
     icon: MapPin,
@@ -72,11 +68,10 @@ const CONTACT_INFO: readonly {
 ] as const
 
 const SOCIAL_LINKS = [
-  { icon: Share2, label: "Share", href: "#" },
-  { icon: MessageCircle, label: "Message", href: "#" },
-  { icon: Link2, label: "Link", href: "#" },
-  { icon: Mail, label: "Email", href: "mailto:hello@echo.agency" },
-  { icon: Globe, label: "Website", href: "#top" },
+  { image: "/images/Linkedin_footer.svg", label: "LinkedIn", href: "https://www.linkedin.com/in/echo-marketing-245121401/", icon: undefined },
+  { image: "/images/Facebook_white_icon_svg.svg", label: "Facebook", href: "https://www.facebook.com/share/18T9VhboV2/?mibextid=wwXIfr", icon: undefined },
+  { image: "/images/Instagram_white.svg", label: "Instagram", href: "https://www.instagram.com/echomarkting64", icon: undefined },
+  { image: "/images/Iconoir_tiktok_white.svg", label: "TikTok", href: "https://www.facebook.com/share/18T9VhboV2/?mibextid=wwXIfr", icon: undefined },
 ] as const
 
 const COPYRIGHT_YEAR = 2026
@@ -164,14 +159,20 @@ export function EchoHoverFooter() {
 
         <div className="echo-hover-footer-bottom">
           <div className="echo-hover-footer-social">
-            {SOCIAL_LINKS.map(({ icon: Icon, href, label }) => (
+            {SOCIAL_LINKS.map(({ image, href, label }) => (
               <a
                 key={label}
                 href={href}
                 aria-label={label}
                 className="transition-colors duration-150 hover:text-[var(--echo-orange)]"
               >
-                <Icon aria-hidden size={20} />
+                <Image
+                  src={image}
+                  alt={label}
+                  width={20}
+                  height={20}
+                  className="h-5 w-5"
+                />
               </a>
             ))}
           </div>

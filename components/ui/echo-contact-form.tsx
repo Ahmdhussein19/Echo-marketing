@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useEffect, type CSSProperties } from "react"
+import { useState, useEffect, type CSSProperties } from "react"
 
 import {
   IcoBldg,
@@ -13,7 +13,6 @@ import {
   IcoSend,
   IcoUser,
 } from "@/components/ui/echo-contact-icons"
-import { submitContactForm } from "@/features/contact/actions/submit-contact-form"
 import {
   CONTACT_BUDGETS,
   CONTACT_SERVICES,
@@ -53,22 +52,6 @@ interface SelectFieldProps {
   id: string
 }
 
-
-// ── Spinner ──────────────────────────────────────────────────────
-function Spinner() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      style={{ animation: "echoSpin 1s linear infinite" }}
-    >
-      <circle cx="8" cy="8" r="6" stroke="rgba(255,255,255,0.15)" strokeWidth="2" />
-      <path d="M8 2a6 6 0 016 6" stroke="#888" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  )
-}
 
 // ── Inline Field ─────────────────────────────────────────────────
 function GlowField({
@@ -177,7 +160,6 @@ export function EchoContactFormCard() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
   const [angle, setAngle] = useState(0)
 
   useEffect(() => {
@@ -216,14 +198,24 @@ export function EchoContactFormCard() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError(null)
-    startTransition(async () => {
-      const result = await submitContactForm({
-        ...form,
-        services: Array.from(selected),
-      })
-      if (result.success) { setSent(true); return }
-      setError(result.error)
-    })
+    
+    // Construct email body with form data
+    const emailBody = `
+Name: ${form.name}
+Email: ${form.email}
+Company: ${form.company || 'N/A'}
+Phone: ${form.phone || 'N/A'}
+Website: ${form.website || 'N/A'}
+Budget: ${form.budget || 'N/A'}
+Services: ${Array.from(selected).join(', ') || 'N/A'}
+Brief: ${form.brief || 'N/A'}
+    `.trim()
+
+    // Open email client with pre-filled data
+    const mailtoLink = `mailto:contact@echo.etriplesoft.com?subject=New Inquiry from ${form.name}&body=${encodeURIComponent(emailBody)}`
+    window.location.href = mailtoLink
+    
+    setSent(true)
   }
 
   const conicGrad = `conic-gradient(from ${angle}deg, #ff6ec7, #a78bfa, #60a5fa, #34d399, #fbbf24, #f87171, #ff6ec7)`
@@ -398,28 +390,26 @@ export function EchoContactFormCard() {
                 gap: 12,
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <Spinner />
                   <span style={{ fontFamily: "var(--font-sans, sans-serif)", fontSize: 13, color: "#555", fontStyle: "italic" }}>
-                    {isPending ? "Sending your brief..." : "Ready when you are..."}
+                    Ready when you are...
                   </span>
                 </div>
 
                 <button
                   type="submit"
-                  disabled={isPending}
                   style={{
                     display: "flex", alignItems: "center", gap: 8,
                     fontFamily: "var(--font-sans, sans-serif)", fontSize: 12, fontWeight: 700,
                     letterSpacing: "0.08em", textTransform: "uppercase",
-                    color: isPending ? "rgba(232,72,32,0.5)" : "#fff",
-                    background: isPending ? "rgba(232,72,32,0.08)" : "#E84820",
-                    border: isPending ? "1px solid rgba(232,72,32,0.2)" : "none",
+                    color: "#fff",
+                    background: "#E84820",
+                    border: "none",
                     borderRadius: 9999, padding: "10px 20px",
-                    cursor: isPending ? "not-allowed" : "pointer",
+                    cursor: "pointer",
                     transition: "all 0.2s", flexShrink: 0,
                   } as CSSProperties}
                 >
-                  {isPending ? "Sending..." : <><IcoSend /> Send Inquiry</>}
+                  <IcoSend /> Send Inquiry
                 </button>
               </div>
             </form>

@@ -31,7 +31,7 @@ const ROW_FOUR = CLIENT_LOGOS.slice(11, 14)
 
 function ClientLogo({ src, alt, width, height, large = false }: { src: string; alt: string; width: number; height: number; large?: boolean }) {
   return (
-    <div className={`flex shrink-0 items-center justify-center px-2 py-0 ${large ? "w-[340px]" : "w-[180px]"}`}>
+    <div className={`flex shrink-0 items-center justify-center px-0 py-0 md:px-1 ${large ? "w-[200px] md:w-[340px]" : "w-[120px] md:w-[180px]"}`}>
       <Image
         src={src}
         alt={alt}
@@ -108,22 +108,22 @@ export function ClientsSection() {
       </div>
 
       <div className="mt-8 flex flex-col gap-0 md:mt-10">
-        <Marquee className="[--gap:0.5rem] -my-2">
+        <Marquee className="[--gap:0.05rem] md:[--gap:0.25rem] -my-2">
           {ROW_ONE.map((logo) => (
             <ClientLogo key={logo.alt} {...logo} />
           ))}
         </Marquee>
-        <Marquee className="[--gap:0.5rem] -my-2" reverse>
+        <Marquee className="[--gap:0.05rem] md:[--gap:0.25rem] -my-2" reverse>
           {ROW_TWO.map((logo) => (
             <ClientLogo key={logo.alt} {...logo} />
           ))}
         </Marquee>
-        <Marquee className="[--gap:0.5rem] -my-2" speed="slow">
+        <Marquee className="[--gap:0.05rem] md:[--gap:0.25rem] -my-2" speed="slow">
           {ROW_THREE.map((logo) => (
             <ClientLogo key={logo.alt} {...logo} />
           ))}
         </Marquee>
-        <Marquee className="[--gap:0.5rem] -my-2" reverse speed="fast">
+        <Marquee className="[--gap:0.05rem] md:[--gap:0.25rem] -my-2" reverse speed="fast">
           {ROW_FOUR.map((logo) => (
             <ClientLogo key={logo.alt} {...logo} />
           ))}
