@@ -28,16 +28,16 @@ const ROTATING_WORDS = [
 ]
 
 const MARQUEE_ITEMS = [
-  "Brand Identity",
-  "Content Creation",
-  "SEO Growth",
-  "Website Development",
-  "Mobile Applications",
-  "Media Buying",
-  "Media Production",
-  "Reel Creation",
-  "Performance Campaigns",
-  "Digital Strategy",
+  { name: "Brand Identity", color: "#D95F2B" },
+  { name: "Content Creation", color: "#141414" },
+  { name: "SEO Growth", color: "#D95F2B" },
+  { name: "Website Development", color: "#141414" },
+  { name: "Mobile Applications", color: "#D95F2B" },
+  { name: "Media Buying", color: "#141414" },
+  { name: "Media Production", color: "#D95F2B" },
+  { name: "Reel Creation", color: "#141414" },
+  { name: "Performance Campaigns", color: "#D95F2B" },
+  { name: "Digital Strategy", color: "#141414" },
 ]
 
 const slideUpVariants: Variants = {
@@ -260,81 +260,45 @@ export function AgencyHero({ className, scrollProgress }: AgencyHeroProps) {
               borderRadius: "var(--radius-md)",
               display: "grid",
               gap: "0",
+              maskImage: "linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%)",
             }}
           >
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16"
-              style={{
-                background: "linear-gradient(to right, var(--echo-bg), transparent)",
-              }}
-            />
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16"
-              style={{
-                background: "linear-gradient(to left, var(--echo-bg), transparent)",
-              }}
-            />
             <div style={{ background: "var(--echo-bg)" }}>
-              <Marquee pauseOnHover repeat={4} className="py-1.5 [--duration:45s] [--gap:0.5rem]">
+              <Marquee pauseOnHover repeat={4} className="py-0.5 [--duration:45s] [--gap:0.5rem]">
                 {MARQUEE_ITEMS.slice(0, 4).map((item) => (
                   <span
-                    key={item}
-                    className="shrink-0 flex items-center border-[0.5px] border-[var(--echo-border)] px-3 py-1"
-                    style={{
-                      borderRadius: "var(--radius-sm)",
-                      backgroundImage: "linear-gradient(135deg, #1a1a1a 0%, #2e2e2e 50%, #111 100%)",
-                    }}
+                    key={item.name}
+                    className="rounded-md px-4 py-2 text-sm font-medium text-white"
+                    style={{ backgroundColor: item.color }}
                   >
-                    <span
-                      className="font-sans text-[10px] uppercase tracking-[0.13em] leading-none"
-                      style={{ color: "var(--echo-text-3)" }}
-                    >
-                      {item}
-                    </span>
+                    {item.name}
                   </span>
                 ))}
               </Marquee>
             </div>
             <div style={{ background: "var(--echo-bg)" }}>
-              <Marquee pauseOnHover repeat={4} reverse className="py-1.5 [--duration:50s] [--gap:0.5rem]">
+              <Marquee pauseOnHover repeat={4} reverse className="py-0.5 [--duration:50s] [--gap:0.5rem]">
                 {MARQUEE_ITEMS.slice(3, 7).map((item) => (
                   <span
-                    key={item}
-                    className="shrink-0 flex items-center border-[0.5px] border-[var(--echo-border)] px-3 py-1"
-                    style={{
-                      borderRadius: "var(--radius-sm)",
-                      backgroundImage: "linear-gradient(135deg, #1a1a1a 0%, #2e2e2e 50%, #111 100%)",
-                    }}
+                    key={item.name}
+                    className="rounded-md px-4 py-2 text-sm font-medium text-white"
+                    style={{ backgroundColor: item.color }}
                   >
-                    <span
-                      className="font-sans text-[10px] uppercase tracking-[0.13em] leading-none"
-                      style={{ color: "var(--echo-text-3)" }}
-                    >
-                      {item}
-                    </span>
+                    {item.name}
                   </span>
                 ))}
               </Marquee>
             </div>
             <div style={{ background: "var(--echo-bg)" }}>
-              <Marquee pauseOnHover repeat={4} className="py-1.5 [--duration:42s] [--gap:0.5rem]">
+              <Marquee pauseOnHover repeat={4} className="py-0.5 [--duration:42s] [--gap:0.5rem]">
                 {MARQUEE_ITEMS.slice(6).map((item) => (
                   <span
-                    key={item}
-                    className="shrink-0 flex items-center border-[0.5px] border-[var(--echo-border)] px-3 py-1"
-                    style={{
-                      borderRadius: "var(--radius-sm)",
-                      backgroundImage: "linear-gradient(135deg, #1a1a1a 0%, #2e2e2e 50%, #111 100%)",
-                    }}
+                    key={item.name}
+                    className="rounded-md px-4 py-2 text-sm font-medium text-white"
+                    style={{ backgroundColor: item.color }}
                   >
-                    <span
-                      className="font-sans text-[10px] uppercase tracking-[0.13em] leading-none"
-                      style={{ color: "var(--echo-text-3)" }}
-                    >
-                      {item}
-                    </span>
+                    {item.name}
                   </span>
                 ))}
               </Marquee>

@@ -25,7 +25,7 @@ const WHY_US_STATS: readonly WhyUsStat[] = [
     label: ["Successful projects", "completed"],
   },
   {
-    value: "10",
+    value: "7",
     suffix: "+",
     label: ["Years of experience", "in creative industry"],
   },

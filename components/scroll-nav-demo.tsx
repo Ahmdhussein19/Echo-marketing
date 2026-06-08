@@ -58,6 +58,18 @@ const EchoHoverFooter = dynamic(
   },
 )
 
+const ClientsSection = dynamic(
+  () =>
+    import("@/components/ui/clients-section").then(
+      (module) => module.ClientsSection,
+    ),
+  {
+    loading: () => (
+      <div aria-hidden className="min-h-[400px] bg-[var(--echo-bg)]" id="clients" />
+    ),
+  },
+)
+
 const EchoContactSection = dynamic(
   () =>
     import("@/components/ui/echo-contact-section").then(
@@ -650,6 +662,7 @@ export function ScrollNavDemo() {
         <TrackElementWithinViewport />
         <WhyUsSection />
         <HowWeWorkSection />
+        <ClientsSection />
         <EchoContactSection />
         <EchoHoverFooter />
       </ScrollNavigationMenu>
@@ -677,6 +690,7 @@ export function ScrollNavDemo() {
       <TrackElementWithinViewport />
       <WhyUsSection />
       <HowWeWorkSection />
+      <ClientsSection />
       <EchoContactSection />
       <EchoHoverFooter />
     </ScrollNavigationMenu>

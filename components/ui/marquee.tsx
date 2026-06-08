@@ -8,6 +8,7 @@ interface MarqueeProps extends ComponentPropsWithoutRef<"div"> {
   children: React.ReactNode
   vertical?: boolean
   repeat?: number
+  speed?: "slow" | "normal" | "fast"
 }
 
 export function Marquee({
@@ -17,13 +18,21 @@ export function Marquee({
   children,
   vertical = false,
   repeat = 4,
+  speed = "normal",
   ...props
 }: MarqueeProps) {
+  const speedVariants = {
+    slow: "[--duration:120s]",
+    normal: "[--duration:40s]",
+    fast: "[--duration:10s]",
+  }
+
   return (
     <div
       {...props}
       className={cn(
-        "group flex overflow-hidden [--duration:40s] [--gap:0.75rem] [gap:var(--gap)]",
+        "group flex overflow-hidden [--gap:0.75rem] [gap:var(--gap)]",
+        speedVariants[speed],
         {
           "flex-row": !vertical,
           "flex-col": vertical,

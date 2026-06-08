@@ -12,11 +12,11 @@ export const CONTACT_SERVICES = [
 ] as const
 
 export const CONTACT_BUDGETS = [
-  "Under $3,000",
-  "$3,000 – $6,000",
-  "$6,000 – $10,000",
-  "$10,000 – $20,000",
-  "$20,000+",
+  "Under $1,500",
+  "$1,500 – $3,000",
+  "$3,000 – $5,000",
+  "$5,000 – $10,000",
+  "$10,000+",
   "Let's discuss",
 ] as const
 
